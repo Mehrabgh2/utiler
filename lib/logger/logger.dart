@@ -56,10 +56,6 @@ class Logger {
     } else {
       developer.log(msg, name: _getName(level));
     }
-    // TODO add to v2
-    // if (export) {
-    //   _logToFile('[${level == LogLevel.verbose ? tag : _getName(level)}] $msg');
-    // }
     if (showWidget) {
       final newList = List<LogModel>.from(logs.value);
       final widgetMsg =

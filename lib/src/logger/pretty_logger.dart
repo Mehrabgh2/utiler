@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '/core/guard.dart';
-import '/logger/log_level.dart';
+import '../core/guard.dart';
+import 'log_level.dart';
 import 'logger.dart';
 
 class PrettyLogger {

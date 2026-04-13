@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '/logger/pretty_logger.dart';
+import '../logger/pretty_logger.dart';
 import 'api_exception.dart';
 
 class ApiService {

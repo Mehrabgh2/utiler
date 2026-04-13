@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'log_level.dart';
 
@@ -56,6 +58,10 @@ class Logger {
     } else {
       developer.log(msg, name: _getName(level));
     }
+
+    if (export) {
+      _logToFile('[${level == LogLevel.verbose ? tag : _getName(level)}] $msg');
+    }
     if (showWidget) {
       final newList = List<LogModel>.from(logs.value);
       final widgetMsg =
@@ -74,6 +80,19 @@ class Logger {
           );
         });
       }
+    }
+  }
+
+  static Future<void> _logToFile(String message) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/app.log');
+      await file.writeAsString(
+        '${_removeColors(message)}\n',
+        mode: FileMode.append,
+      );
+    } catch (_) {
+      e('Write log to file causing error');
     }
   }
 

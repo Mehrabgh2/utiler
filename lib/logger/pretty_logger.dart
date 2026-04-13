@@ -1,4 +1,9 @@
-import 'log_level.dart';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import '/core/guard.dart';
+import '/logger/log_level.dart';
 import 'logger.dart';
 
 class PrettyLogger {
@@ -34,6 +39,16 @@ class PrettyLogger {
     final icon = _icons[level] ?? "";
     final color = _colors[level] ?? _reset;
     return "$color$icon";
+  }
+
+  static String _getStatusColor(int statusCode) {
+    if (statusCode >= 200 && statusCode < 300) {
+      return _green;
+    } else if (statusCode >= 300 && statusCode < 400) {
+      return _yellow;
+    } else {
+      return _red;
+    }
   }
 
   static void d(Object? message, {String? tag, bool? printAddress}) {
@@ -82,5 +97,35 @@ class PrettyLogger {
       tag,
       printAddress: printAddress,
     );
+  }
+
+  static void api(http.Response response, {bool? printAddress}) {
+    String text =
+        '${_getStatusColor(response.statusCode)} ${_prettifyJson(response.body)}';
+    text = text.replaceAll('\n', '\n${_getStatusColor(response.statusCode)}');
+    text = '\n$text';
+    Logger.v(
+      text,
+      '${response.request?.method} ${response.request?.url.path} ${response.statusCode}',
+      printAddress: printAddress,
+    );
+  }
+
+  static String _prettifyJson(String data) {
+    try {
+      Map? json = Guard<Map>()(() => jsonDecode(data));
+      if (json != null) {
+        return JsonEncoder.withIndent('  ').convert(json);
+      } else {
+        List? list = Guard<List>()(() => List.from(jsonDecode(data)));
+        if (list != null) {
+          return JsonEncoder.withIndent('  ').convert(list);
+        } else {
+          return data;
+        }
+      }
+    } catch (e) {
+      return data.toString();
+    }
   }
 }

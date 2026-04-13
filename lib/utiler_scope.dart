@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'core/lifecycle_handler.dart';
+import 'database/database.dart';
+import 'database/secure_database_data.dart';
 import 'logger/logger.dart';
 import 'logger/logger_console.dart';
 import 'values/locale/locale_values.dart';
@@ -23,6 +26,7 @@ class UtilerScope extends StatelessWidget {
     init();
   }
 
+  final Database database = Database();
   final Widget child;
   final LifecycleListener? lifecycleListener;
   final bool enabledLog;
@@ -67,11 +71,31 @@ class UtilerScope extends StatelessWidget {
     finalChild = ValuesScope(
       locales: locales,
       themes: themes,
+      initialLocale: await _getSavedLocale(),
+      initialTheme: await _getSavedTheme(),
+      themeChanged: _themeChanged,
+      localeChanged: _localeChanged,
       themeTransitionDuration: themeTransitionDuration,
       themeTransitionInitRadius: themeTransitionInitRadius,
       themeTransitionOffset: themeTransitionOffset,
       child: finalChild,
     );
     return finalChild;
+  }
+
+  void _themeChanged(String newTheme) {
+    database.putSecure(SecureDatabaseData(key: 'theme', value: newTheme));
+  }
+
+  void _localeChanged(String newLocale) {
+    database.putSecure(SecureDatabaseData(key: 'locale', value: newLocale));
+  }
+
+  Future<String?> _getSavedTheme() async {
+    return (await database.getSecure('theme'))?.value;
+  }
+
+  Future<String?> _getSavedLocale() async {
+    return (await database.getSecure('locale'))?.value;
   }
 }

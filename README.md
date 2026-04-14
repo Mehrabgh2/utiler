@@ -16,6 +16,7 @@ A comprehensive **Dart/Flutter utility toolkit** that simplifies everyday develo
 - ParallelExecutor – Run multiple async tasks in parallel
 
 ### 🧠 Core Utilities
+- InternetConnectivity – A reactive utility that detects real-time network status including connected, disconnected, and VPN states with stream-based listeners and current status check.
 - Either – Functional error handling (Left/Right pattern)
 - Guard – Safe execution wrapper for error handling
 - LazyValue – Lazy initialization helper

@@ -1,39 +1,62 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# 🚀 Utiler
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A comprehensive **Dart/Flutter utility toolkit** that simplifies everyday development tasks — from async handling and concurrency to logging, storage, networking, UI helpers, and global app configuration.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+---
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## ✨ Features
 
-## Features
+### ⏱ Async Utilities
+- Debouncer – Prevent rapid repeated calls (e.g., search input)
+- Throttler – Limit execution rate over time
+- Retry – Retry failed async operations with configurable logic
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+### ⚡ Concurrency Utilities
+- BatchExecutor – Execute tasks in controlled batches
+- ParallelExecutor – Run multiple async tasks in parallel
 
-## Getting started
+### 🧠 Core Utilities
+- Either – Functional error handling (Left/Right pattern)
+- Guard – Safe execution wrapper for error handling
+- LazyValue – Lazy initialization helper
+- LifecycleHandler – App lifecycle observer
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+### 💾 Database Layer
+- Database – Unified adapter for JSON & secure storage with CRUD support
+- JsonDatabase – Local storage using Hive
+- SecureDatabase – Secure key-value storage
 
-## Usage
+### 🔌 Extensions
+- Context, Iterable, List, Map, Num, and String extensions
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+### 📊 Logging System
+- Logger – Base logging functionality
+- PrettyLogger – Formatted and readable logs
+- LoggerConsole (UI) – In-app log viewer
+- StopwatchLogger – Measure execution time
 
-```dart
-const like = 'sample';
-```
+### 🌐 API Service
+- ApiService – CRUD methods (GET, POST, PUT, DELETE) built on top of `http`
 
-## Additional information
+### 🎨 UI Utilities
+- Collection of reusable and practical widgets
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+### 🌍 Values & Scopes
+- ValuesScope – Global wrapper for locale and theme
+- LocaleScope – Localization handler
+- ThemeScope – Theme management
+
+### 🧩 Utiler Scope
+- UtilerScope – Single entry point to access and manage all utilities
+
+---
+
+## 💡 Why Utiler?
+
+- All-in-one utility toolkit
+- Reduces boilerplate code
+- Improves code readability and maintainability
+- Clean and scalable structure
+- Designed for real-world Flutter applications
+
+---

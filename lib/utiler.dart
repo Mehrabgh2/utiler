@@ -3,6 +3,7 @@ export 'src/async/retey.dart';
 export 'src/async/throttler.dart';
 export 'src/concurrency/batch_executor.dart';
 export 'src/concurrency/parallel_executor.dart';
+export 'src/core/internet_connectivity.dart';
 export 'src/core/either.dart';
 export 'src/core/guard.dart';
 export 'src/core/lazy_value.dart';

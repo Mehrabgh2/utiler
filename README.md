@@ -49,6 +49,18 @@ A comprehensive **Dart/Flutter utility toolkit** that simplifies everyday develo
 ### 🧩 Utiler Scope
 - UtilerScope – Single entry point to access and manage all utilities
 
+## 🛠 Feature Generator (create_feature)
+
+Includes a CLI tool to quickly generate a **Clean Architecture feature structure**.
+
+### 🚀 Usage
+
+Run the following command:
+
+```bash
+dart run create_feature.dart -n feature_name
+```
+
 ---
 
 ## 💡 Why Utiler?

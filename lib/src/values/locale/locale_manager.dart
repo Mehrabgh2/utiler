@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'locale_values.dart';
+import '/utiler.dart';
 
 class LocaleManager<T extends LocaleValues> extends InheritedWidget {
   final List<T> locales;
@@ -17,6 +16,16 @@ class LocaleManager<T extends LocaleValues> extends InheritedWidget {
 
   static LocaleManager<T>? of<T extends LocaleValues>(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<LocaleManager<T>>();
+  }
+
+  @override
+  Widget get child {
+    return Builder(
+      builder: (context) {
+        UtilerScope.localeContext = context;
+        return super.child;
+      },
+    );
   }
 
   @override

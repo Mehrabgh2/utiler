@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:utiler/utiler.dart';
 
-class ThemeManager<T extends ThemeValues> extends InheritedWidget {
-  final List<T> themes;
-  final T currentTheme;
-  final Function(String, [Offset?, int?, Duration?]) changeTheme;
+class ThemeJsonManager extends InheritedWidget {
+  final List<Map<String, dynamic>> themes;
+  final Map<String, dynamic> currentTheme;
+  final Function(String, [bool?, Offset?, int?, Duration?]) changeTheme;
 
-  const ThemeManager({
+  const ThemeJsonManager({
     super.key,
     required super.child,
     required this.themes,
@@ -14,8 +14,8 @@ class ThemeManager<T extends ThemeValues> extends InheritedWidget {
     required this.changeTheme,
   });
 
-  static ThemeManager<T>? of<T extends ThemeValues>(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<ThemeManager<T>>();
+  static ThemeJsonManager? of<T extends ThemeValues>(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ThemeJsonManager>();
   }
 
   @override
@@ -29,7 +29,7 @@ class ThemeManager<T extends ThemeValues> extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(ThemeManager<T> oldWidget) {
+  bool updateShouldNotify(ThemeJsonManager oldWidget) {
     return currentTheme != oldWidget.currentTheme;
   }
 }

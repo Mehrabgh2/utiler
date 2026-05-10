@@ -2,20 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'theme_manager.dart';
+import 'theme_json_manager.dart';
 import 'theme_transition_scope.dart';
-import 'theme_values.dart';
 
-class ThemeScope<T extends ThemeValues> extends StatefulWidget {
+class ThemeJsonScope extends StatefulWidget {
   final Widget child;
-  final List<T> themes;
+  final List<Map<String, dynamic>> themes;
   final String initialTheme;
   final int transitionInitRadius;
   final Duration transitionDuration;
   final Offset transitionOffset;
   final Function(String)? themeChanged;
 
-  const ThemeScope({
+  const ThemeJsonScope({
     required this.child,
     required this.initialTheme,
     this.themes = const [],
@@ -29,14 +28,16 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   static void changeTheme(
     BuildContext context,
     String id, [
+    bool? withAnimation,
     Offset? offset,
     int? transitionInitRadius,
     Duration? transitionDuration,
   ]) {
-    final inheritedWidget = ThemeManager.of(context);
+    final inheritedWidget = ThemeJsonManager.of(context);
     if (inheritedWidget != null) {
       inheritedWidget.changeTheme(
         id,
+        withAnimation,
         offset,
         transitionInitRadius,
         transitionDuration,
@@ -44,30 +45,31 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
     }
   }
 
-  static ThemeValues? getCurrentTheme(BuildContext context) {
-    return ThemeManager.of(context)?.currentTheme;
+  static Map<String, dynamic>? getCurrentTheme(BuildContext context) {
+    return ThemeJsonManager.of(context)?.currentTheme;
   }
 
-  static List<ThemeValues>? getAllThemes(BuildContext context) {
-    return ThemeManager.of(context)?.themes;
+  static List<Map<String, dynamic>>? getAllThemes(BuildContext context) {
+    return ThemeJsonManager.of(context)?.themes;
   }
 
   @override
-  State<ThemeScope<T>> createState() => _ThemeScope<T>();
+  State<ThemeJsonScope> createState() => _ThemeJsonScope();
 }
 
-class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
-  late T _currentTheme;
+class _ThemeJsonScope extends State<ThemeJsonScope> {
+  late Map<String, dynamic> _currentTheme;
   bool _changingTheme = false;
   Offset? _offset;
   int? _transitionInitRadius;
   Duration? _transitionDuration;
+  bool withAnimation = false;
 
   @override
   void initState() {
     super.initState();
     int index = widget.themes.indexWhere(
-      (element) => element.id == widget.initialTheme,
+      (element) => element.keys.first == widget.initialTheme,
     );
     if (index == -1) {
       index = 0;
@@ -77,12 +79,19 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
 
   void _changeTheme(
     String id, [
+    bool? withAnimation,
     Offset? offset,
     int? transitionInitRadius,
     Duration? transitionDuration,
   ]) {
+    this.withAnimation = withAnimation ?? false;
     if (!_changingTheme) {
-      final index = widget.themes.indexWhere((theme) => theme.id == id);
+      if (!this.withAnimation) {
+        transitionDuration = Duration(milliseconds: 10);
+      }
+      final index = widget.themes.indexWhere(
+        (element) => element.keys.first == id,
+      );
       if (index != -1) {
         if (offset != null) {
           _offset = offset;
@@ -97,9 +106,9 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
           _changingTheme = true;
           _currentTheme = widget.themes[index];
           if (widget.themeChanged != null) {
-            widget.themeChanged!(widget.themes[index].id);
+            widget.themeChanged!(id);
           }
-          Timer(widget.transitionDuration, () {
+          Timer(_transitionDuration ?? widget.transitionDuration, () {
             _changingTheme = false;
             _offset = null;
             _transitionInitRadius = null;
@@ -112,16 +121,18 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeManager<ThemeValues>(
+    return ThemeJsonManager(
       themes: widget.themes,
       currentTheme: _currentTheme,
       changeTheme: _changeTheme,
-      child: ThemeTransitionScope(
-        duration: _transitionDuration ?? widget.transitionDuration,
-        initRdius: _transitionInitRadius ?? widget.transitionInitRadius,
-        offset: _offset ?? widget.transitionOffset,
-        child: widget.child,
-      ),
+      child: withAnimation
+          ? ThemeTransitionScope(
+              duration: _transitionDuration ?? widget.transitionDuration,
+              initRdius: _transitionInitRadius ?? widget.transitionInitRadius,
+              offset: _offset ?? widget.transitionOffset,
+              child: widget.child,
+            )
+          : widget.child,
     );
   }
 }

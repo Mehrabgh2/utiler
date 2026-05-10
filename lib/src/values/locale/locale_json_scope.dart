@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'locale_manager.dart';
-import 'locale_values.dart';
+import 'locale_json_manager.dart';
 
-class LocaleScope<T extends LocaleValues> extends StatefulWidget {
+class LocaleJsonScope extends StatefulWidget {
   final Widget child;
-  final List<T> locales;
+  final List<Map<String, dynamic>> locales;
   final String initialLocale;
   final Function(String)? localeChanged;
 
-  const LocaleScope({
+  const LocaleJsonScope({
     required this.child,
     required this.initialLocale,
     this.locales = const [],
@@ -18,32 +17,32 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
   });
 
   static void changeLocale(BuildContext context, String id) {
-    final inheritedWidget = LocaleManager.of(context);
+    final inheritedWidget = LocaleJsonManager.of(context);
     if (inheritedWidget != null) {
       inheritedWidget.changeLocale(id);
     }
   }
 
-  static LocaleValues? getCurrentLocale(BuildContext context) {
-    return LocaleManager.of(context)?.currentLocale;
+  static Map<String, dynamic>? getCurrentLocale(BuildContext context) {
+    return LocaleJsonManager.of(context)?.currentLocale;
   }
 
-  static List<LocaleValues>? getAllLocales(BuildContext context) {
-    return LocaleManager.of(context)?.locales;
+  static List<Map<String, dynamic>>? getAllLocales(BuildContext context) {
+    return LocaleJsonManager.of(context)?.locales;
   }
 
   @override
-  State<LocaleScope<T>> createState() => _LocaleScope<T>();
+  State<LocaleJsonScope> createState() => _LocaleJsonScope();
 }
 
-class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>> {
-  late T _currentLocale;
+class _LocaleJsonScope extends State<LocaleJsonScope> {
+  late Map<String, dynamic> _currentLocale;
 
   @override
   void initState() {
     super.initState();
     int index = widget.locales.indexWhere(
-      (element) => element.id == widget.initialLocale,
+      (element) => element.keys.first == widget.initialLocale,
     );
     if (index == -1) {
       index = 0;
@@ -52,12 +51,14 @@ class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>> {
   }
 
   void _changeLocale(String id) {
-    final index = widget.locales.indexWhere((locale) => locale.id == id);
+    final index = widget.locales.indexWhere(
+      (element) => element.keys.first == id,
+    );
     if (index != -1) {
       setState(() {
         _currentLocale = widget.locales[index];
         if (widget.localeChanged != null) {
-          widget.localeChanged!(widget.locales[index].id);
+          widget.localeChanged!(id);
         }
       });
     }
@@ -65,11 +66,12 @@ class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return LocaleManager<LocaleValues>(
+    return LocaleJsonManager(
       locales: widget.locales,
       currentLocale: _currentLocale,
       changeLocale: _changeLocale,
       child: widget.child,
+      context: context,
     );
   }
 }

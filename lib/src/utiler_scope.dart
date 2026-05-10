@@ -1,4 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
+import 'package:utiler/src/values/locale/locale_extension.dart';
+import 'package:utiler/src/values/theme/theme_extension.dart';
 
 import 'core/lifecycle_handler.dart';
 import 'database/database.dart';
@@ -17,7 +23,11 @@ class UtilerScope extends StatelessWidget {
     this.exportLog = false,
     this.showLogWidget = false,
     this.themes,
+    this.jsonThemes,
+    this.jsonThemesAddress,
     this.locales,
+    this.jsonLocales,
+    this.jsonLocalesAddress,
     this.themeTransitionInitRadius = 60,
     this.themeTransitionDuration = const Duration(milliseconds: 1250),
     this.themeTransitionOffset = Offset.zero,
@@ -26,6 +36,8 @@ class UtilerScope extends StatelessWidget {
     init();
   }
 
+  static BuildContext? themeContext;
+  static BuildContext? localeContext;
   final Database database = Database();
   final Widget child;
   final LifecycleListener? lifecycleListener;
@@ -33,10 +45,14 @@ class UtilerScope extends StatelessWidget {
   final bool exportLog;
   final bool showLogWidget;
   final List<ThemeValues>? themes;
+  final List<Map<String, dynamic>>? jsonThemes;
+  final List<String>? jsonThemesAddress;
+  final List<LocaleValues>? locales;
+  final List<Map<String, dynamic>>? jsonLocales;
+  final List<String>? jsonLocalesAddress;
   final int themeTransitionInitRadius;
   final Duration themeTransitionDuration;
   final Offset themeTransitionOffset;
-  final List<LocaleValues>? locales;
 
   void init() async {
     Logger.enabled = enabledLog;
@@ -68,9 +84,27 @@ class UtilerScope extends StatelessWidget {
     if (showLogWidget) {
       finalChild = LoggerConsole(child: finalChild);
     }
+    if (locales == null &&
+        jsonLocales == null &&
+        themes == null &&
+        jsonThemes == null &&
+        jsonLocalesAddress == null &&
+        jsonThemesAddress == null) {
+      return finalChild;
+    }
     finalChild = ValuesScope(
       locales: locales,
       themes: themes,
+      jsonLocales: jsonLocalesAddress != null && jsonLocalesAddress!.isNotEmpty
+          ? await Future.wait<Map<String, dynamic>>(
+              jsonLocalesAddress!.map((e) => _readAssets(e)),
+            )
+          : jsonLocales,
+      jsonThemes: jsonThemesAddress != null && jsonThemesAddress!.isNotEmpty
+          ? await Future.wait<Map<String, dynamic>>(
+              jsonThemesAddress!.map((e) => _readAssets(e)),
+            )
+          : jsonThemes,
       initialLocale: await _getSavedLocale(),
       initialTheme: await _getSavedTheme(),
       themeChanged: _themeChanged,
@@ -81,6 +115,14 @@ class UtilerScope extends StatelessWidget {
       child: finalChild,
     );
     return finalChild;
+  }
+
+  static void changeAppTheme(String newTheme) {
+    themeContext?.changeAppTheme(newTheme, false);
+  }
+
+  static void changeAppLocale(String newLocale) {
+    localeContext?.changeAppLocale(newLocale);
   }
 
   void _themeChanged(String newTheme) {
@@ -97,5 +139,12 @@ class UtilerScope extends StatelessWidget {
 
   Future<String?> _getSavedLocale() async {
     return (await database.getSecure('locale'))?.value;
+  }
+
+  Future<Map<String, dynamic>> _readAssets(String address) async {
+    Map<String, dynamic> file = json.decode(
+      await rootBundle.loadString(address),
+    );
+    return {p.basenameWithoutExtension(address): file};
   }
 }

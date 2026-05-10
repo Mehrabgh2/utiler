@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-typedef LifecycleListener = Function(AppLifecycleState);
+typedef LifecycleListener = Function(AppLifecycleState state);
 
 class LifecycleHandler extends StatefulWidget {
   final Widget child;

@@ -44,246 +44,250 @@ class _LoggerConsoleState extends State<LoggerConsole> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return Stack(
-      children: [
-        widget.child,
-        AnimatedPositioned(
-          bottom: isShow ? 0 : -size.height * .5,
-          duration: const Duration(milliseconds: 400),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Container(
-                width: size.width,
-                height: size.height * .5,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Colors.white.withValues(alpha: 0.07),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    width: 1.2,
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          widget.child,
+          AnimatedPositioned(
+            bottom: isShow ? 0 : -size.height * .5,
+            duration: const Duration(milliseconds: 400),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  width: size.width,
+                  height: size.height * .5,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    color: Colors.white.withValues(alpha: 0.07),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 20,
+                        spreadRadius: -5,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      blurRadius: 20,
-                      spreadRadius: -5,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              isShow = false;
-                            });
-                          },
-                          icon: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Colors.black87,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                isShow = false;
+                              });
+                            },
+                            icon: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.black87,
+                            ),
                           ),
-                        ),
-                        const Expanded(child: SizedBox()),
-                        _chip('d', () {
-                          setState(() {
-                            dEnabled = !dEnabled;
-                          });
-                        }, dEnabled ? _getColor(LogLevel.debug) : null),
-                        _chip('i', () {
-                          setState(() {
-                            iEnabled = !iEnabled;
-                          });
-                        }, iEnabled ? _getColor(LogLevel.info) : null),
-                        _chip('w', () {
-                          setState(() {
-                            wEnabled = !wEnabled;
-                          });
-                        }, wEnabled ? _getColor(LogLevel.warning) : null),
-                        _chip('e', () {
-                          setState(() {
-                            eEnabled = !eEnabled;
-                          });
-                        }, eEnabled ? _getColor(LogLevel.error) : null),
-                        _chip('s', () {
-                          setState(() {
-                            sEnabled = !sEnabled;
-                          });
-                        }, sEnabled ? _getColor(LogLevel.success) : null),
-                        _chip('v', () {
-                          setState(() {
-                            vEnabled = !vEnabled;
-                          });
-                        }, vEnabled ? _getColor(LogLevel.verbose) : null),
-                        IconButton(
-                          onPressed: () {
-                            Logger.logs.value = [];
-                          },
-                          icon: Icon(Icons.delete, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.only(
-                          left: 15,
-                          right: 15,
-                          bottom: 15,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: .65),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: ValueListenableBuilder<List<LogModel>>(
-                          valueListenable: Logger.logs,
-                          builder: (context, value, child) {
-                            List<LogModel> list = _getList(value);
-                            return ScrollbarTheme(
-                              data: ScrollbarThemeData(
-                                thumbColor: WidgetStateColor.resolveWith(
-                                  (states) => Colors.grey,
+                          const Expanded(child: SizedBox()),
+                          _chip('d', () {
+                            setState(() {
+                              dEnabled = !dEnabled;
+                            });
+                          }, dEnabled ? _getColor(LogLevel.debug) : null),
+                          _chip('i', () {
+                            setState(() {
+                              iEnabled = !iEnabled;
+                            });
+                          }, iEnabled ? _getColor(LogLevel.info) : null),
+                          _chip('w', () {
+                            setState(() {
+                              wEnabled = !wEnabled;
+                            });
+                          }, wEnabled ? _getColor(LogLevel.warning) : null),
+                          _chip('e', () {
+                            setState(() {
+                              eEnabled = !eEnabled;
+                            });
+                          }, eEnabled ? _getColor(LogLevel.error) : null),
+                          _chip('s', () {
+                            setState(() {
+                              sEnabled = !sEnabled;
+                            });
+                          }, sEnabled ? _getColor(LogLevel.success) : null),
+                          _chip('v', () {
+                            setState(() {
+                              vEnabled = !vEnabled;
+                            });
+                          }, vEnabled ? _getColor(LogLevel.verbose) : null),
+                          IconButton(
+                            onPressed: () {
+                              Logger.logs.value = [];
+                            },
+                            icon: Icon(Icons.delete, color: Colors.black87),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            left: 15,
+                            right: 15,
+                            bottom: 15,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: .65),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: ValueListenableBuilder<List<LogModel>>(
+                            valueListenable: Logger.logs,
+                            builder: (context, value, child) {
+                              List<LogModel> list = _getList(value);
+                              return ScrollbarTheme(
+                                data: ScrollbarThemeData(
+                                  thumbColor: WidgetStateColor.resolveWith(
+                                    (states) => Colors.grey,
+                                  ),
+                                  trackColor: WidgetStateColor.resolveWith(
+                                    (states) =>
+                                        Colors.grey.withValues(alpha: .2),
+                                  ),
+                                  radius: Radius.circular(100),
                                 ),
-                                trackColor: WidgetStateColor.resolveWith(
-                                  (states) => Colors.grey.withValues(alpha: .2),
-                                ),
-                                radius: Radius.circular(100),
-                              ),
-                              child: list.isEmpty
-                                  ? Center(
-                                      child: Text(
-                                        "Nothing to show",
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 20,
-                                        ),
-                                      ),
-                                    )
-                                  : Scrollbar(
-                                      thumbVisibility: true,
-                                      trackVisibility: true,
-                                      controller: Logger.scrollController,
-                                      interactive: true,
-                                      child: Stack(
-                                        children: [
-                                          Positioned.fill(
-                                            child: ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              controller:
-                                                  Logger.scrollController,
-                                              physics: const BouncingScrollPhysics(
-                                                parent:
-                                                    AlwaysScrollableScrollPhysics(),
-                                              ),
-                                              itemCount: list.length,
-                                              itemBuilder: (context, index) {
-                                                return _logRow(list[index]);
-                                              },
-                                            ),
+                                child: list.isEmpty
+                                    ? Center(
+                                        child: Text(
+                                          "Nothing to show",
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 20,
                                           ),
-                                          if (isShowFab)
-                                            Positioned(
-                                              bottom: 10,
-                                              right: 10,
-                                              child: Container(
-                                                height: 40,
-                                                width: 40,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        100,
+                                        ),
+                                      )
+                                    : Scrollbar(
+                                        trackVisibility: true,
+                                        controller: Logger.scrollController,
+                                        interactive: true,
+                                        child: Stack(
+                                          children: [
+                                            Positioned.fill(
+                                              child: ListView.builder(
+                                                padding: EdgeInsets.zero,
+                                                controller:
+                                                    Logger.scrollController,
+                                                physics:
+                                                    const BouncingScrollPhysics(
+                                                      parent:
+                                                          AlwaysScrollableScrollPhysics(),
+                                                    ),
+                                                itemCount: list.length,
+                                                itemBuilder: (context, index) {
+                                                  return _logRow(list[index]);
+                                                },
+                                              ),
+                                            ),
+                                            if (isShowFab)
+                                              Positioned(
+                                                bottom: 10,
+                                                right: 10,
+                                                child: Container(
+                                                  height: 40,
+                                                  width: 40,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          100,
+                                                        ),
+                                                    color: Colors.black,
+                                                  ),
+                                                  child: FittedBox(
+                                                    child: IconButton(
+                                                      onPressed: () {
+                                                        Logger.scrollController
+                                                            .animateTo(
+                                                              Logger
+                                                                  .scrollController
+                                                                  .positions
+                                                                  .last
+                                                                  .maxScrollExtent,
+                                                              duration:
+                                                                  const Duration(
+                                                                    milliseconds:
+                                                                        500,
+                                                                  ),
+                                                              curve: Curves
+                                                                  .easeInOut,
+                                                            );
+                                                      },
+                                                      icon: Icon(
+                                                        Icons
+                                                            .keyboard_arrow_down_rounded,
+                                                        color: Colors.grey,
                                                       ),
-                                                  color: Colors.black,
-                                                ),
-                                                child: FittedBox(
-                                                  child: IconButton(
-                                                    onPressed: () {
-                                                      Logger.scrollController
-                                                          .animateTo(
-                                                            Logger
-                                                                .scrollController
-                                                                .positions
-                                                                .last
-                                                                .maxScrollExtent,
-                                                            duration:
-                                                                const Duration(
-                                                                  milliseconds:
-                                                                      500,
-                                                                ),
-                                                            curve: Curves
-                                                                .easeInOut,
-                                                          );
-                                                    },
-                                                    icon: Icon(
-                                                      Icons
-                                                          .keyboard_arrow_down_rounded,
-                                                      color: Colors.grey,
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        AnimatedPositioned(
-          bottom: isShow ? -100 : 20,
-          left: 20,
-          duration: const Duration(milliseconds: 500),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(100),
-                  color: Colors.white.withValues(alpha: 0.07),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      blurRadius: 20,
-                      spreadRadius: -5,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      isShow = true;
-                    });
-                  },
-                  icon: Icon(
-                    Icons.keyboard_arrow_up_rounded,
-                    color: Colors.grey,
-                    size: 30,
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          AnimatedPositioned(
+            bottom: isShow ? -100 : 20,
+            left: 20,
+            duration: const Duration(milliseconds: 500),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(100),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(100),
+                    color: Colors.white.withValues(alpha: 0.07),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 20,
+                        spreadRadius: -5,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        isShow = true;
+                      });
+                    },
+                    icon: Icon(
+                      Icons.keyboard_arrow_up_rounded,
+                      color: Colors.grey,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

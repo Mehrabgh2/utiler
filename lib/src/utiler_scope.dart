@@ -28,9 +28,6 @@ class UtilerScope extends StatelessWidget {
     this.locales,
     this.jsonLocales,
     this.jsonLocalesAddress,
-    this.themeTransitionInitRadius = 60,
-    this.themeTransitionDuration = const Duration(milliseconds: 1250),
-    this.themeTransitionOffset = Offset.zero,
     super.key,
   }) {
     init();
@@ -50,9 +47,6 @@ class UtilerScope extends StatelessWidget {
   final List<LocaleValues>? locales;
   final List<Map<String, dynamic>>? jsonLocales;
   final List<String>? jsonLocalesAddress;
-  final int themeTransitionInitRadius;
-  final Duration themeTransitionDuration;
-  final Offset themeTransitionOffset;
 
   void init() async {
     Logger.enabled = enabledLog;
@@ -109,16 +103,13 @@ class UtilerScope extends StatelessWidget {
       initialTheme: await _getSavedTheme(),
       themeChanged: _themeChanged,
       localeChanged: _localeChanged,
-      themeTransitionDuration: themeTransitionDuration,
-      themeTransitionInitRadius: themeTransitionInitRadius,
-      themeTransitionOffset: themeTransitionOffset,
       child: finalChild,
     );
     return finalChild;
   }
 
   static void changeAppTheme(String newTheme) {
-    themeContext?.changeAppTheme(newTheme, false);
+    themeContext?.changeAppTheme(newTheme);
   }
 
   static void changeAppLocale(String newLocale) {

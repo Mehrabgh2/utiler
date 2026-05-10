@@ -19,9 +19,6 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     this.initialTheme,
     this.themeChanged,
     this.localeChanged,
-    this.themeTransitionInitRadius,
-    this.themeTransitionDuration,
-    this.themeTransitionOffset,
     super.key,
   });
 
@@ -33,9 +30,6 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   final List<T>? themes;
   final List<Map<String, dynamic>>? jsonThemes;
   final String? initialTheme;
-  final int? themeTransitionInitRadius;
-  final Duration? themeTransitionDuration;
-  final Offset? themeTransitionOffset;
   final Function(String)? themeChanged;
   final Function(String)? localeChanged;
   final Widget child;
@@ -57,20 +51,12 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
               themes: jsonThemes!,
               initialTheme: initialTheme ?? themes!.first.id,
               themeChanged: themeChanged,
-              transitionInitRadius: themeTransitionInitRadius ?? 60,
-              transitionDuration:
-                  themeTransitionDuration ?? const Duration(milliseconds: 1250),
-              transitionOffset: themeTransitionOffset ?? Offset.zero,
               child: child,
             )
           : ThemeScope<T>(
               themes: themes!,
               initialTheme: initialTheme ?? themes!.first.id,
               themeChanged: themeChanged,
-              transitionInitRadius: themeTransitionInitRadius ?? 60,
-              transitionDuration:
-                  themeTransitionDuration ?? const Duration(milliseconds: 1250),
-              transitionOffset: themeTransitionOffset ?? Offset.zero,
               child: child,
             );
       return isJsonLocale
@@ -105,10 +91,6 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         themes: themes!,
         initialTheme: initialTheme ?? themes!.first.id,
         themeChanged: themeChanged,
-        transitionInitRadius: themeTransitionInitRadius ?? 60,
-        transitionDuration:
-            themeTransitionDuration ?? const Duration(milliseconds: 1250),
-        transitionOffset: themeTransitionOffset ?? Offset.zero,
         child: child,
       );
     } else if (jsonThemes != null) {
@@ -116,10 +98,6 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         themes: jsonThemes!,
         initialTheme: initialTheme ?? themes!.first.id,
         themeChanged: themeChanged,
-        transitionInitRadius: themeTransitionInitRadius ?? 60,
-        transitionDuration:
-            themeTransitionDuration ?? const Duration(milliseconds: 1250),
-        transitionOffset: themeTransitionOffset ?? Offset.zero,
         child: child,
       );
     } else {

@@ -4,7 +4,7 @@ import 'package:utiler/utiler.dart';
 class ThemeManager<T extends ThemeValues> extends InheritedWidget {
   final List<T> themes;
   final T currentTheme;
-  final Function(String, [Offset?, int?, Duration?]) changeTheme;
+  final Function(String) changeTheme;
 
   const ThemeManager({
     super.key,

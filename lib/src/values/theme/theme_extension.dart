@@ -19,30 +19,11 @@ extension ThemeExtension on BuildContext {
     return inheritedWidget.currentTheme.values.first as Map<String, dynamic>;
   }
 
-  void changeAppTheme(
-    String id, [
-    bool withAnimation = false,
-    Offset? offset,
-    int? themeTransitionInitRadius,
-    Duration? themeTransitionDuration,
-  ]) {
+  void changeAppTheme(String id) {
     if (ValuesScope.isJsonTheme) {
-      ThemeJsonScope.changeTheme(
-        this,
-        id,
-        withAnimation,
-        offset,
-        themeTransitionInitRadius,
-        themeTransitionDuration,
-      );
+      ThemeJsonScope.changeTheme(this, id);
     } else {
-      ThemeScope.changeTheme(
-        this,
-        id,
-        offset,
-        themeTransitionInitRadius,
-        themeTransitionDuration,
-      );
+      ThemeScope.changeTheme(this, id);
     }
   }
 

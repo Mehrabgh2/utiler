@@ -4,7 +4,7 @@ import 'package:utiler/utiler.dart';
 class ThemeJsonManager extends InheritedWidget {
   final List<Map<String, dynamic>> themes;
   final Map<String, dynamic> currentTheme;
-  final Function(String, [bool?, Offset?, int?, Duration?]) changeTheme;
+  final Function(String) changeTheme;
 
   const ThemeJsonManager({
     super.key,

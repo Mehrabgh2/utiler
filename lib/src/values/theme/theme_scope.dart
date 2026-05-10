@@ -1,46 +1,26 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'theme_manager.dart';
-import 'theme_transition_scope.dart';
 import 'theme_values.dart';
 
 class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   final Widget child;
   final List<T> themes;
   final String initialTheme;
-  final int transitionInitRadius;
-  final Duration transitionDuration;
-  final Offset transitionOffset;
   final Function(String)? themeChanged;
 
   const ThemeScope({
     required this.child,
     required this.initialTheme,
     this.themes = const [],
-    this.transitionInitRadius = 60,
-    this.transitionDuration = const Duration(milliseconds: 1250),
-    this.transitionOffset = Offset.zero,
     this.themeChanged,
     super.key,
   });
 
-  static void changeTheme(
-    BuildContext context,
-    String id, [
-    Offset? offset,
-    int? transitionInitRadius,
-    Duration? transitionDuration,
-  ]) {
+  static void changeTheme(BuildContext context, String id) {
     final inheritedWidget = ThemeManager.of(context);
     if (inheritedWidget != null) {
-      inheritedWidget.changeTheme(
-        id,
-        offset,
-        transitionInitRadius,
-        transitionDuration,
-      );
+      inheritedWidget.changeTheme(id);
     }
   }
 
@@ -58,10 +38,6 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
 
 class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
   late T _currentTheme;
-  bool _changingTheme = false;
-  Offset? _offset;
-  int? _transitionInitRadius;
-  Duration? _transitionDuration;
 
   @override
   void initState() {
@@ -75,38 +51,15 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
     _currentTheme = widget.themes[index];
   }
 
-  void _changeTheme(
-    String id, [
-    Offset? offset,
-    int? transitionInitRadius,
-    Duration? transitionDuration,
-  ]) {
-    if (!_changingTheme) {
-      final index = widget.themes.indexWhere((theme) => theme.id == id);
-      if (index != -1) {
-        if (offset != null) {
-          _offset = offset;
+  void _changeTheme(String id) {
+    final index = widget.themes.indexWhere((theme) => theme.id == id);
+    if (index != -1) {
+      setState(() {
+        _currentTheme = widget.themes[index];
+        if (widget.themeChanged != null) {
+          widget.themeChanged!(widget.themes[index].id);
         }
-        if (transitionInitRadius != null) {
-          _transitionInitRadius = transitionInitRadius;
-        }
-        if (transitionDuration != null) {
-          _transitionDuration = transitionDuration;
-        }
-        setState(() {
-          _changingTheme = true;
-          _currentTheme = widget.themes[index];
-          if (widget.themeChanged != null) {
-            widget.themeChanged!(widget.themes[index].id);
-          }
-          Timer(widget.transitionDuration, () {
-            _changingTheme = false;
-            _offset = null;
-            _transitionInitRadius = null;
-            _transitionDuration = null;
-          });
-        });
-      }
+      });
     }
   }
 
@@ -116,12 +69,7 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>> {
       themes: widget.themes,
       currentTheme: _currentTheme,
       changeTheme: _changeTheme,
-      child: ThemeTransitionScope(
-        duration: _transitionDuration ?? widget.transitionDuration,
-        initRdius: _transitionInitRadius ?? widget.transitionInitRadius,
-        offset: _offset ?? widget.transitionOffset,
-        child: widget.child,
-      ),
+      child: widget.child,
     );
   }
 }

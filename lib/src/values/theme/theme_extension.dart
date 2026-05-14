@@ -1,24 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/utiler.dart';
+import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/values/theme/theme_json_manager.dart';
+import 'package:utiler/src/values/theme/theme_json_scope.dart';
+import 'package:utiler/src/values/theme/theme_manager.dart';
+import 'package:utiler/src/values/theme/theme_scope.dart';
+import 'package:utiler/src/values/theme/theme_values.dart';
+import 'package:utiler/src/values/values_scope.dart';
 
-import 'theme_json_manager.dart';
-import 'theme_json_scope.dart';
-import 'theme_manager.dart';
-import 'theme_scope.dart';
-
+/// Extensions on [BuildContext] for accessing and switching app themes.
+///
+/// Supports both:
+/// - strongly typed theme models ([ThemeValues])
+/// - JSON-based theme maps
+///
+/// Provides unified API for theme access and switching.
+///
+/// Example:
+/// ```dart
+/// final theme = context.appTheme;
+/// context.changeAppTheme('dark');
+/// ```
 extension ThemeExtension on BuildContext {
+  /// Returns the current typed theme if available.
+  ///
+  /// Returns `null` if theme system is not initialized.
   ThemeValues? get appTheme {
     final inheritedWidget = ThemeManager.of<ThemeValues>(this);
     if (inheritedWidget == null) return null;
     return inheritedWidget.currentTheme;
   }
 
+  /// Returns the current JSON-based theme map.
   Map<String, dynamic>? get appJsonTheme {
     final inheritedWidget = ThemeJsonManager.of(this);
     if (inheritedWidget == null) return null;
     return inheritedWidget.currentTheme.values.first as Map<String, dynamic>;
   }
 
+  /// Changes the current app theme by its identifier.
+  ///
+  /// Automatically selects JSON or typed theme system based on configuration.
   void changeAppTheme(String id) {
     if (ValuesScope.isJsonTheme) {
       ThemeJsonScope.changeTheme(this, id);
@@ -27,6 +48,9 @@ extension ThemeExtension on BuildContext {
     }
   }
 
+  /// Returns the currently active theme ID.
+  ///
+  /// Returns `null` if no theme is active.
   String? get currentThemeId {
     if (ValuesScope.isJsonTheme) {
       final inheritedWidget = ThemeJsonManager.of(this);
@@ -36,27 +60,44 @@ extension ThemeExtension on BuildContext {
     }
   }
 
+  /// Returns all available typed themes.
   List<ThemeValues>? get allThemes => ThemeScope.getAllThemes(this);
 
+  /// Returns all available JSON-based themes.
   List<Map<String, dynamic>>? get allJsonThemes =>
       ThemeJsonScope.getAllThemes(this);
 }
 
+/// Extension on [String] to resolve theme colors from JSON theme maps.
+///
+/// Supports dot notation keys like:
+/// ```dart
+/// "colors.primary".cr
+/// ```
 extension ThemeStringExtension on String {
+  /// Resolves a color from the current JSON theme context.
+  ///
+  /// Returns [Colors.white] as fallback if resolution fails.
   Color get cr {
     if (UtilerScope.themeContext == null) {
       return Colors.white;
     }
+
     final inheritedWidget = ThemeJsonManager.of(UtilerScope.themeContext!);
+
     if (inheritedWidget == null) return Colors.white;
-    Map<String, dynamic> theme =
+
+    final Map<String, dynamic> theme =
         inheritedWidget.currentTheme.values.first as Map<String, dynamic>;
+
     return _resolveJsonPath(theme, this) ?? Colors.white;
   }
 
+  /// Resolves a dot-separated path inside a nested JSON map.
   Color? _resolveJsonPath(Map<String, dynamic> json, String path) {
     final parts = path.split('.');
     dynamic current = json;
+
     for (final part in parts) {
       if (current is Map<String, dynamic>) {
         if (!current.containsKey(part)) return null;
@@ -65,14 +106,23 @@ extension ThemeStringExtension on String {
         return null;
       }
     }
+
     return _getColor(current);
   }
 }
 
+/// Converts a hex color string into a [Color].
+///
+/// Supports formats:
+/// - `#RRGGBB`
+/// - `RRGGBB`
+/// - `AARRGGBB`
 Color _getColor(String color) {
   color = color.replaceAll('#', '');
+
   if (color.length == 6) {
     color = 'FF$color';
   }
+
   return Color(int.parse(color, radix: 16));
 }

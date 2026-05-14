@@ -2,10 +2,77 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:utiler/src/logger/log_level.dart';
+import 'package:utiler/src/logger/logger.dart';
 
-import 'log_level.dart';
-import 'logger.dart';
-
+/// A full-screen in-app logging console overlay for debugging Flutter applications.
+///
+/// `LoggerConsole` wraps your application and provides a floating developer console
+/// that displays logs in real time using the internal [`Logger`] system.
+///
+/// It supports:
+/// - Live log streaming from [`Logger.logs`]
+/// - Filtering logs by level (debug, info, warning, error, success, verbose)
+/// - Scroll control with auto-follow toggle
+/// - Copy log messages via double-tap
+/// - Clear logs instantly
+/// - Expand/collapse overlay UI
+///
+/// The console is intended for **development use only** and should typically
+/// be disabled in production builds.
+///
+/// ---
+///
+/// ## Example
+///
+/// ```dart
+/// UtilerScope(
+///   showLogWidget: true,
+/// );
+///
+/// or Use:
+/// ```dart
+/// LoggerConsole(
+///   child: MyApp(),
+/// );
+/// ```
+/// ---
+///
+/// ## Features
+///
+/// ### Log Filtering
+/// Each log level can be toggled individually:
+/// - `d` → Debug
+/// - `i` → Info
+/// - `w` → Warning
+/// - `e` → Error
+/// - `s` → Success
+/// - `v` → Verbose
+///
+/// ### Interaction
+/// - Tap bottom-right button → open console
+/// - Tap top arrow → close console
+/// - Double-tap log → copy message
+/// - Delete icon → clear all logs
+///
+/// ---
+///
+/// ## Dependencies
+/// - [`Logger`] for log storage and streaming
+/// - [`LogLevel`] for log categorization
+/// - Flutter Material + Services APIs
+///
+/// ---
+///
+/// ## Notes
+///
+/// This widget is intended for debugging and development purposes only.
+/// Do not enable in production unless explicitly required.
+///
+/// See also:
+/// - [`Logger`]
+/// - [`PrettyLogger`]
+/// - [`UtilerScope`]
 class LoggerConsole extends StatefulWidget {
   const LoggerConsole({required this.child, super.key});
   final Widget child;
@@ -158,7 +225,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
                                 child: list.isEmpty
                                     ? Center(
                                         child: Text(
-                                          "Nothing to show",
+                                          'Nothing to show',
                                           style: TextStyle(
                                             color: Colors.grey,
                                             fontSize: 20,
@@ -203,8 +270,9 @@ class _LoggerConsoleState extends State<LoggerConsole> {
                                                   ),
                                                   child: FittedBox(
                                                     child: IconButton(
-                                                      onPressed: () {
-                                                        Logger.scrollController
+                                                      onPressed: () async {
+                                                        await Logger
+                                                            .scrollController
                                                             .animateTo(
                                                               Logger
                                                                   .scrollController
@@ -324,8 +392,10 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2),
       child: GestureDetector(
-        onDoubleTap: () {
-          Clipboard.setData(ClipboardData(text: log.message.split('\n')[1]));
+        onDoubleTap: () async {
+          await Clipboard.setData(
+            ClipboardData(text: log.message.split('\n')[1]),
+          );
         },
         child: Text.rich(
           TextSpan(

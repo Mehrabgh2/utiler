@@ -2,15 +2,45 @@ import 'dart:convert';
 
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:utiler/src/database/json_database_data.dart';
+import 'package:utiler/src/logger/pretty_logger.dart';
 
-import '../logger/pretty_logger.dart';
-import 'json_database_data.dart';
-
+/// A lightweight JSON-based database built on top of Hive.
+///
+/// This class provides a simple key-value storage system where values are
+/// stored as JSON-encoded strings and mapped to [JsonDatabaseData] objects.
+///
+/// The database must be initialized using [init] before any operations.
+///
+/// Example:
+/// ```dart
+/// final db = JsonDatabase();
+/// await db.init(true);
+///
+/// await db.put(JsonDatabaseData(
+///   key: 'user_1',
+///   data: {'name': 'Alice', 'age': 30},
+/// ));
+///
+/// final result = await db.get('user_1');
+/// print(result?.data);
+///
+/// await db.close();
+/// ```
 class JsonDatabase {
   Box<String>? _db;
+
+  /// Internal Hive box name used for storage.
   static const String _boxName = 'jsonDataBox';
+
+  /// Enables or disables logging for database operations.
   bool _logging = false;
 
+  /// Initializes the database and opens the Hive box.
+  ///
+  /// If [logging] is true, internal operations and errors will be logged.
+  ///
+  /// This method must be called before any database operation.
   Future<void> init(bool logging) async {
     _logging = logging;
     if (Hive.isBoxOpen(_boxName)) {
@@ -19,6 +49,7 @@ class JsonDatabase {
       try {
         Hive.init((await getApplicationDocumentsDirectory()).path);
         _db = await Hive.openBox<String>(_boxName);
+
         if (_logging) {
           PrettyLogger.s('Json database initialized successfuly');
         }
@@ -30,10 +61,15 @@ class JsonDatabase {
     }
   }
 
+  /// Stores a [JsonDatabaseData] entry in the database.
+  ///
+  /// Returns `true` if the operation succeeds, otherwise `false`.
+  /// Throws a [StateError] if a write error occurs after initialization.
   Future<bool> put(JsonDatabaseData data) async {
     if (await isInit()) {
       try {
         await _db!.put(data.key, json.encode(data.toJson()));
+
         if (_logging) {
           PrettyLogger.i('Json Database put "${data.key}" successfuly');
         }
@@ -49,19 +85,24 @@ class JsonDatabase {
         );
       }
     }
+
     if (_logging) {
       PrettyLogger.e('Json Database put "${data.key}" error: not initialized');
     }
     return false;
   }
 
+  /// Retrieves a stored entry by [key].
+  ///
+  /// Returns a [JsonDatabaseData] if found, otherwise `null`.
+  /// Throws a [StateError] if decoding fails after initialization.
   Future<JsonDatabaseData?> get(String key) async {
     if (await isInit()) {
       if (await containsKey(key)) {
         try {
           final jsonString = _db!.get(key);
           if (jsonString != null) {
-            JsonDatabaseData data = JsonDatabaseData.fromJson(
+            final JsonDatabaseData data = JsonDatabaseData.fromJson(
               json.decode(jsonString),
             );
             if (_logging) {
@@ -81,6 +122,7 @@ class JsonDatabase {
           throw StateError('Json Database get "$key" error: ${e.toString()}');
         }
       }
+
       if (_logging) {
         PrettyLogger.e('Json Database get can`t find "$key"');
       }
@@ -92,6 +134,10 @@ class JsonDatabase {
     return null;
   }
 
+  /// Deletes a stored entry by [key].
+  ///
+  /// Returns `true` if the entry was successfully deleted, otherwise `false`.
+  /// Throws a [StateError] if deletion fails after initialization.
   Future<bool> delete(String key) async {
     if (await isInit()) {
       if (await containsKey(key)) {
@@ -112,49 +158,65 @@ class JsonDatabase {
           );
         }
       }
+
       if (_logging) {
         PrettyLogger.e('Json Database get can`t find "$key"');
       }
       return false;
     }
+
     if (_logging) {
       PrettyLogger.e('Json Database delete "$key" error: not initialized');
     }
     return false;
   }
 
+  /// Clears all stored data from the database.
+  ///
+  /// Returns `true` if successful, otherwise `false`.
+  /// Throws a [StateError] if clearing fails after initialization.
   Future<bool> clear() async {
     if (await isInit()) {
       try {
-        _db!.deleteFromDisk();
+        await _db!.deleteFromDisk();
         if (_logging) {
           PrettyLogger.i('Json Database clear successfuly');
         }
+        return true;
       } catch (e) {
         if (_logging) {
           PrettyLogger.e('Json Database clear error: ${e.toString()}');
         }
         throw StateError('Json Database clear error: ${e.toString()}');
       }
-      return true;
     }
+
     if (_logging) {
       PrettyLogger.e('Json Database clear error: not initialized');
     }
     return false;
   }
 
+  /// Checks whether a given [key] exists in the database.
+  ///
+  /// Returns `true` if the key exists, otherwise `false`.
   Future<bool> containsKey(String key) async {
     if (await isInit()) {
       try {
         return _db!.containsKey(key);
-      } catch (e) {
+      } catch (_) {
         return false;
       }
     }
     return false;
   }
 
+  /// Ensures the database is initialized.
+  ///
+  /// If not already initialized, it will attempt to initialize it using
+  /// the current logging configuration.
+  ///
+  /// Returns `true` if the database is ready, otherwise `false`.
   Future<bool> isInit() async {
     if (_db == null) {
       await init(_logging);
@@ -162,6 +224,9 @@ class JsonDatabase {
     return _db != null;
   }
 
+  /// Closes the database and releases resources.
+  ///
+  /// After calling this, the database must be re-initialized before use.
   Future<void> close() async {
     if (_db != null && _db!.isOpen) {
       await _db!.close();

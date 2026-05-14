@@ -1,3 +1,8 @@
+## 1.0.1
+
+### Changed
+- Added DartDoc comments to core utility classes for better documentation and pub.dev readability.
+
 ## 1.0.0
 
 ## ✨ Features

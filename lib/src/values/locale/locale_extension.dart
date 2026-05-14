@@ -1,24 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/utiler.dart';
+import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/values/locale/locale_json_manager.dart';
+import 'package:utiler/src/values/locale/locale_json_scope.dart';
+import 'package:utiler/src/values/locale/locale_manager.dart';
+import 'package:utiler/src/values/locale/locale_scope.dart';
+import 'package:utiler/src/values/locale/locale_values.dart';
+import 'package:utiler/src/values/values_scope.dart';
 
-import 'locale_json_manager.dart';
-import 'locale_json_scope.dart';
-import 'locale_manager.dart';
-import 'locale_scope.dart';
-
+/// Extensions on [BuildContext] for accessing and managing app localization.
+///
+/// This extension provides a unified API for both structured locale models
+/// ([LocaleValues]) and JSON-based localization systems.
+///
+/// It supports:
+/// - retrieving current locale
+/// - switching locale dynamically
+/// - accessing all available locales
+/// - compatibility with JSON and typed localization systems
+///
+/// Example:
+/// ```dart
+/// final locale = context.appLocale;
+/// context.changeAppLocale('en');
+/// print(context.currentLocaleId);
+/// ```
 extension LocaleExtension on BuildContext {
+  /// Returns the current typed locale ([LocaleValues]) if available.
+  ///
+  /// Returns `null` if localization is not initialized or unavailable.
   LocaleValues? get appLocale {
     final inheritedWidget = LocaleManager.of<LocaleValues>(this);
     if (inheritedWidget == null) return null;
     return inheritedWidget.currentLocale;
   }
 
+  /// Returns the current JSON-based locale as a [Map].
+  ///
+  /// This is used when localization is stored in JSON format instead of
+  /// strongly typed classes.
   Map<String, dynamic>? get appJsonLocale {
     final inheritedWidget = LocaleJsonManager.of(this);
     if (inheritedWidget == null) return null;
     return inheritedWidget.currentLocale.values.first as Map<String, dynamic>;
   }
 
+  /// Changes the current application locale by [id].
+  ///
+  /// Automatically selects the correct implementation based on whether
+  /// JSON-based or typed localization is active.
   void changeAppLocale(String id) {
     if (ValuesScope.isJsonLocale) {
       LocaleJsonScope.changeLocale(this, id);
@@ -27,6 +56,9 @@ extension LocaleExtension on BuildContext {
     }
   }
 
+  /// Returns the current locale identifier (e.g. `"en"`, `"fa"`).
+  ///
+  /// Returns `null` if no locale is active.
   String? get currentLocaleId {
     if (ValuesScope.isJsonLocale) {
       final inheritedWidget = LocaleJsonManager.of(this);
@@ -36,27 +68,50 @@ extension LocaleExtension on BuildContext {
     }
   }
 
+  /// Returns all available typed locales.
   List<LocaleValues>? get allLocales => LocaleScope.getAllLocales(this);
 
+  /// Returns all available JSON locales.
   List<Map<String, dynamic>>? get allJsonLocales =>
       LocaleJsonScope.getAllLocales(this);
 }
 
+/// Extension on [String] to resolve localized values from JSON locale maps.
+///
+/// Supports dot notation paths like:
+/// ```dart
+/// "home.title".tr
+/// ```
 extension LocaleStringExtension on String {
+  /// Translates the string using the current JSON locale context.
+  ///
+  /// If no localization context is available or the key is missing,
+  /// returns the original string.
   String get tr {
     if (UtilerScope.localeContext == null) {
       return this;
     }
+
     final inheritedWidget = LocaleJsonManager.of(UtilerScope.localeContext!);
+
     if (inheritedWidget == null) return this;
-    Map<String, dynamic> locale =
+
+    final Map<String, dynamic> locale =
         inheritedWidget.currentLocale.values.first as Map<String, dynamic>;
+
     return _resolveJsonPath(locale, this) ?? this;
   }
 
+  /// Resolves a dot-separated key path inside a nested JSON map.
+  ///
+  /// Example:
+  /// ```dart
+  /// _resolveJsonPath(locale, "home.title")
+  /// ```
   String? _resolveJsonPath(Map<String, dynamic> json, String path) {
     final parts = path.split('.');
     dynamic current = json;
+
     for (final part in parts) {
       if (current is Map<String, dynamic>) {
         if (!current.containsKey(part)) return null;
@@ -65,6 +120,7 @@ extension LocaleStringExtension on String {
         return null;
       }
     }
+
     return current;
   }
 }

@@ -195,7 +195,10 @@ void _createFile(String path, String content) {
   }
 }
 
-String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+String _capitalize(String s) {
+  if (s.isEmpty) return s;
+  return s[0].toUpperCase() + s.substring(1);
+}
 
 String _generateDatasourceContent(String featureName) {
   return "import '../models/${featureName}_sample_request_impl.dart';\nimport '../models/${featureName}_sample_response_impl.dart';\n\nabstract class ${_capitalize(featureName)}Datasource {\n  Future<${_capitalize(featureName)}SampleResponseImpl?> sample(\n    ${_capitalize(featureName)}SampleRequestImpl params,\n  );\n}\n\nclass ${_capitalize(featureName)}DatasourceImpl extends ${_capitalize(featureName)}Datasource {\n  @override\n  Future<${_capitalize(featureName)}SampleResponseImpl?> sample(\n    ${_capitalize(featureName)}SampleRequestImpl params,\n  ) async {\n    return ${_capitalize(featureName)}SampleResponseImpl();\n  }\n}\n";
@@ -210,7 +213,7 @@ String _generateRepositoryImplContent(String featureName) {
 }
 
 String _generateEntitiesContent(String className) {
-  return "abstract class $className {}";
+  return 'abstract class $className {}';
 }
 
 String _generateRepositoryContent(String featureName) {
@@ -253,13 +256,13 @@ String _generateScreenContent(
   if (useBloc) {
     if (useRiverpod) {
       content +=
-          "final bloc = ref.read<${_capitalize(featureName)}Bloc>(${featureName}BlocProvider);\n    return Scaffold(\n      body: BlocBuilder<${_capitalize(featureName)}Bloc, ${_capitalize(featureName)}State>(\n        bloc: bloc,\n        builder: (context, state) {\n          return const SizedBox();\n        },\n      ),\n    );\n  }\n}\n";
+          'final bloc = ref.read<${_capitalize(featureName)}Bloc>(${featureName}BlocProvider);\n    return Scaffold(\n      body: BlocBuilder<${_capitalize(featureName)}Bloc, ${_capitalize(featureName)}State>(\n        bloc: bloc,\n        builder: (context, state) {\n          return const SizedBox();\n        },\n      ),\n    );\n  }\n}\n';
     } else {
       content +=
-          "final bloc = ${_capitalize(featureName)}Bloc(\n      usecase: ${_capitalize(featureName)}SampleUsecase(\n        repository: ${_capitalize(featureName)}RepositoryImpl(\n          datasource: ${_capitalize(featureName)}DatasourceImpl(),\n        ),\n      ),\n    );\n    return BlocProvider(\n      create: (context) => bloc,\n      child: BlocBuilder<${_capitalize(featureName)}Bloc, ${_capitalize(featureName)}State>(\n        builder: (context, state) {\n          return Scaffold();\n        },\n      ),\n    );\n  }\n}\n";
+          'final bloc = ${_capitalize(featureName)}Bloc(\n      usecase: ${_capitalize(featureName)}SampleUsecase(\n        repository: ${_capitalize(featureName)}RepositoryImpl(\n          datasource: ${_capitalize(featureName)}DatasourceImpl(),\n        ),\n      ),\n    );\n    return BlocProvider(\n      create: (context) => bloc,\n      child: BlocBuilder<${_capitalize(featureName)}Bloc, ${_capitalize(featureName)}State>(\n        builder: (context, state) {\n          return Scaffold();\n        },\n      ),\n    );\n  }\n}\n';
     }
   } else {
-    content += "return Scaffold();\n  }\n}\n";
+    content += 'return Scaffold();\n  }\n}\n';
   }
   return content;
 }
@@ -269,11 +272,11 @@ String _generateBlocContent(String featureName) {
 }
 
 String _generateEventContent(String featureName) {
-  return "abstract class ${_capitalize(featureName)}Event {}";
+  return 'abstract class ${_capitalize(featureName)}Event {}';
 }
 
 String _generateStateContent(String featureName) {
-  return "abstract class ${_capitalize(featureName)}State {}\n\nclass ${_capitalize(featureName)}IdleState extends ${_capitalize(featureName)}State {}";
+  return 'abstract class ${_capitalize(featureName)}State {}\n\nclass ${_capitalize(featureName)}IdleState extends ${_capitalize(featureName)}State {}';
 }
 
 String _generateProviderContent(String featureName) {

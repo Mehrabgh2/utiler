@@ -2,7 +2,6 @@
 
 ### Fixed
 
-- Completed MIT `LICENSE` text for pub.dev license detection.
 - Add animation to change locale and theme
 
 ### Added

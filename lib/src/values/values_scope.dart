@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
+import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/combined_switching_area.dart';
 import 'package:utiler/src/values/locale/locale_json_scope.dart';
 import 'package:utiler/src/values/locale/locale_scope.dart';
 import 'package:utiler/src/values/locale/locale_values.dart';
 import 'package:utiler/src/values/theme/theme_json_scope.dart';
 import 'package:utiler/src/values/theme/theme_scope.dart';
 import 'package:utiler/src/values/theme/theme_values.dart';
+import 'package:utiler/src/values/values_runtime.dart';
 
 /// A high-level configuration wrapper that wires together theming and localization.
 ///
-/// [ValuesScope] is the entry point for the `utiler` values system and decides:
+/// `ValuesScope` is the entry point for the `utiler` values system and decides:
 /// - whether to use typed or JSON-based themes/locales
 /// - which scopes to mount in the widget tree
 /// - how locale/theme switching is configured
@@ -31,7 +35,7 @@ import 'package:utiler/src/values/theme/theme_values.dart';
 /// ```
 class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     extends StatelessWidget {
-  /// Creates a [ValuesScope].
+  /// Creates a `ValuesScope`.
   const ValuesScope({
     required this.child,
     this.locales,
@@ -42,6 +46,10 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     this.initialTheme,
     this.themeChanged,
     this.localeChanged,
+    this.themeAnimationClipper = const AnimationCircleClipper(),
+    this.themeAnimationDuration = const Duration(milliseconds: 500),
+    this.localeAnimationClipper = const AnimationCircleClipper(),
+    this.localeAnimationDuration = const Duration(milliseconds: 500),
     super.key,
   });
 
@@ -69,6 +77,22 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Callback triggered when locale changes.
   final Function(String)? localeChanged;
 
+  /// Theme animation effect
+  final AnimationClipper themeAnimationClipper;
+
+  /// Duration of animated theme reveal transitions.
+  ///
+  /// Passed to [ThemeScope] and [ThemeJsonScope] when themes are enabled.
+  final Duration themeAnimationDuration;
+
+  /// Locale animation effect
+  final AnimationClipper localeAnimationClipper;
+
+  /// Duration of animated locale reveal transitions.
+  ///
+  /// Passed to [LocaleScope] and [LocaleJsonScope] when locales are enabled.
+  final Duration localeAnimationDuration;
+
   /// The widget below this scope.
   final Widget child;
 
@@ -89,41 +113,65 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
 
     isJsonLocale = jsonLocales != null;
     isJsonTheme = jsonThemes != null;
-
     if ((locales != null || jsonLocales != null) &&
         (themes != null || jsonThemes != null)) {
-      Widget innerChild = isJsonTheme
-          ? ThemeJsonScope(
-              themes: jsonThemes!,
-              initialTheme: initialTheme ?? themes!.first.id,
-              themeChanged: themeChanged,
-              child: child,
-            )
-          : ThemeScope<T>(
-              themes: themes!,
-              initialTheme: initialTheme ?? themes!.first.id,
-              themeChanged: themeChanged,
-              child: child,
-            );
+      final effectiveThemeId =
+          ValuesRuntime.currentThemeId ??
+          initialTheme ??
+          (isJsonTheme ? jsonThemes!.first.keys.first : themes!.first.id);
+      final effectiveLocaleId =
+          ValuesRuntime.currentLocaleId ??
+          initialLocale ??
+          (isJsonLocale ? jsonLocales!.first.keys.first : locales!.first.id);
 
-      return isJsonLocale
+      final switchingChild = CombinedSwitchingArea(child: child);
+
+      final localedChild = isJsonLocale
           ? LocaleJsonScope(
               locales: jsonLocales!,
-              initialLocale: initialLocale ?? jsonLocales!.first.keys.first,
+              initialLocale: effectiveLocaleId,
               localeChanged: localeChanged,
-              child: innerChild,
+              animationClipper: localeAnimationClipper,
+              animationDuration: localeAnimationDuration,
+              useLocaleSwitchingArea: false,
+              child: switchingChild,
             )
           : LocaleScope<L>(
               locales: locales!,
-              initialLocale: initialLocale ?? locales!.first.id,
+              initialLocale: effectiveLocaleId,
               localeChanged: localeChanged,
-              child: innerChild,
+              animationClipper: localeAnimationClipper,
+              animationDuration: localeAnimationDuration,
+              useLocaleSwitchingArea: false,
+              child: switchingChild,
+            );
+
+      return isJsonTheme
+          ? ThemeJsonScope(
+              themes: jsonThemes!,
+              initialTheme: effectiveThemeId,
+              themeChanged: themeChanged,
+              animationClipper: themeAnimationClipper,
+              animationDuration: themeAnimationDuration,
+              useThemeSwitchingArea: false,
+              child: localedChild,
+            )
+          : ThemeScope<T>(
+              themes: themes!,
+              initialTheme: effectiveThemeId,
+              themeChanged: themeChanged,
+              animationClipper: themeAnimationClipper,
+              animationDuration: themeAnimationDuration,
+              useThemeSwitchingArea: false,
+              child: localedChild,
             );
     } else if (locales != null) {
       return LocaleScope<L>(
         locales: locales!,
         initialLocale: initialLocale ?? locales!.first.id,
         localeChanged: localeChanged,
+        animationClipper: localeAnimationClipper,
+        animationDuration: localeAnimationDuration,
         child: child,
       );
     } else if (jsonLocales != null) {
@@ -131,6 +179,8 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         locales: jsonLocales!,
         initialLocale: initialLocale ?? jsonLocales!.first.keys.first,
         localeChanged: localeChanged,
+        animationClipper: localeAnimationClipper,
+        animationDuration: localeAnimationDuration,
         child: child,
       );
     } else if (themes != null) {
@@ -138,13 +188,17 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         themes: themes!,
         initialTheme: initialTheme ?? themes!.first.id,
         themeChanged: themeChanged,
+        animationClipper: themeAnimationClipper,
+        animationDuration: themeAnimationDuration,
         child: child,
       );
     } else if (jsonThemes != null) {
       return ThemeJsonScope(
         themes: jsonThemes!,
-        initialTheme: initialTheme ?? themes!.first.id,
+        initialTheme: initialTheme ?? jsonThemes!.first.keys.first,
         themeChanged: themeChanged,
+        animationClipper: themeAnimationClipper,
+        animationDuration: themeAnimationDuration,
         child: child,
       );
     } else {

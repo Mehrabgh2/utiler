@@ -7,11 +7,11 @@ import 'package:utiler/src/logger/logger.dart';
 
 /// A full-screen in-app logging console overlay for debugging Flutter applications.
 ///
-/// `LoggerConsole` wraps your application and provides a floating developer console
-/// that displays logs in real time using the internal [`Logger`] system.
+/// [LoggerConsole] wraps your application and provides a floating developer console
+/// that displays logs in real time using the internal [Logger] system.
 ///
 /// It supports:
-/// - Live log streaming from [`Logger.logs`]
+/// - Live log streaming from [Logger.logs]
 /// - Filtering logs by level (debug, info, warning, error, success, verbose)
 /// - Scroll control with auto-follow toggle
 /// - Copy log messages via double-tap
@@ -58,8 +58,8 @@ import 'package:utiler/src/logger/logger.dart';
 /// ---
 ///
 /// ## Dependencies
-/// - [`Logger`] for log storage and streaming
-/// - [`LogLevel`] for log categorization
+/// - [Logger] for log storage and streaming
+/// - [LogLevel] for log categorization
 /// - Flutter Material + Services APIs
 ///
 /// ---
@@ -70,9 +70,9 @@ import 'package:utiler/src/logger/logger.dart';
 /// Do not enable in production unless explicitly required.
 ///
 /// See also:
-/// - [`Logger`]
-/// - [`PrettyLogger`]
-/// - [`UtilerScope`]
+/// - [Logger]
+/// - [PrettyLogger]
+/// - [UtilerScope]
 class LoggerConsole extends StatefulWidget {
   const LoggerConsole({required this.child, super.key});
   final Widget child;
@@ -81,6 +81,7 @@ class LoggerConsole extends StatefulWidget {
   State<LoggerConsole> createState() => _LoggerConsoleState();
 }
 
+/// [_LoggerConsoleState]
 class _LoggerConsoleState extends State<LoggerConsole> {
   bool isShow = false;
   bool isShowFab = false;
@@ -91,6 +92,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
   bool sEnabled = false;
   bool vEnabled = false;
 
+  /// init scrollController
   @override
   void initState() {
     Logger.scrollController.addListener(() {
@@ -108,6 +110,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     super.initState();
   }
 
+  /// build logger console bottomsheet drawer
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -359,6 +362,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     );
   }
 
+  /// Log level selctable chip item
   Widget _chip(String text, VoidCallback onTap, Color? color) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -388,6 +392,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     );
   }
 
+  /// Log row item
   Widget _logRow(LogModel log) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2),
@@ -417,6 +422,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     );
   }
 
+  /// Filter logs with selected levels
   List<LogModel> _getList(List<LogModel> logs) {
     if (!dEnabled &&
         !iEnabled &&
@@ -454,6 +460,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
     return filtered;
   }
 
+  /// Get log level color
   static Color _getColor(LogLevel level) {
     switch (level) {
       case LogLevel.debug:

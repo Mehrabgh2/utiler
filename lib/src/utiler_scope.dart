@@ -8,10 +8,13 @@ import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
 import 'package:utiler/src/logger/logger.dart';
 import 'package:utiler/src/logger/logger_console.dart';
+import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
+import 'package:utiler/src/values/animation/animation_clipper.dart';
 import 'package:utiler/src/values/locale/locale_extension.dart';
 import 'package:utiler/src/values/locale/locale_values.dart';
 import 'package:utiler/src/values/theme/theme_extension.dart';
 import 'package:utiler/src/values/theme/theme_values.dart';
+import 'package:utiler/src/values/values_runtime.dart';
 import 'package:utiler/src/values/values_scope.dart';
 
 /// The root configuration widget for the Utiler utility package.
@@ -44,12 +47,49 @@ import 'package:utiler/src/values/values_scope.dart';
 ///
 /// You can also load JSON assets directly using `jsonLocalesAddress`.
 ///
+/// ---
+///
+/// #### JSON helpers (`.cr` and `.tr`)
+///
+/// **Recursive JSON value access (color / nested maps)** via `.cr`:
+///
+/// ```dart
+/// // JSON (example)
+/// {
+///   'light': {
+///     'home': {'background': 'FF1565C0'},
+///     'profile': {'background': 'FF1565C0'},
+///   },
+/// }
+///
+/// // Usage
+/// 'home.background'.cr
+/// ```
+///
+/// **Localized string access** via `.tr` (dot notation):
+///
+/// ```dart
+/// // JSON (example)
+/// {
+///   'en': {
+///     'home': {'appbar': 'Home Screen'},
+///     'profile': {'appbar': 'Profile Screen'},
+///   },
+/// }
+///
+/// // Usage
+/// 'home.appbar'.tr
+/// ```
+///
 /// #### Theming
 /// Supports two modes:
 /// - Typed theme system (`ThemeValues`)
 /// - JSON-based theme system (`Map<String, dynamic>`)
 ///
 /// You can also load JSON assets directly using `jsonThemesAddress`.
+///
+/// Theme and Locale switching is animated automatically when using
+/// (`BuildContext.changeAppTheme`) or (`UtilerScope.changeAppTheme`).
 ///
 /// #### Persistence
 /// Automatically saves:
@@ -92,9 +132,9 @@ import 'package:utiler/src/values/values_scope.dart';
 /// - Mixing typed and JSON modes will throw an error.
 /// - This widget must be placed above `MaterialApp` or equivalent.
 ///
-class UtilerScope extends StatelessWidget {
+class UtilerScope extends StatefulWidget {
   /// Creates a [UtilerScope].
-  UtilerScope({
+  const UtilerScope({
     required this.child,
     this.lifecycleListener,
     this.enabledLog = true,
@@ -106,19 +146,12 @@ class UtilerScope extends StatelessWidget {
     this.locales,
     this.jsonLocales,
     this.jsonLocalesAddress,
+    this.themeAnimationClipper = const AnimationCircleClipper(),
+    this.themeAnimationDuration = const Duration(milliseconds: 500),
+    this.localeAnimationClipper = const AnimationCircleClipper(),
+    this.localeAnimationDuration = const Duration(milliseconds: 500),
     super.key,
-  }) {
-    init();
-  }
-
-  /// Global context used by theme extensions.
-  static BuildContext? themeContext;
-
-  /// Global context used by locale extensions.
-  static BuildContext? localeContext;
-
-  /// Internal database instance for persistence.
-  final Database database = Database();
+  });
 
   /// Root widget of the application.
   final Widget child;
@@ -153,17 +186,61 @@ class UtilerScope extends StatelessWidget {
   /// Asset paths for JSON locale files.
   final List<String>? jsonLocalesAddress;
 
-  /// Initializes global logging configuration.
-  void init() async {
-    Logger.enabled = enabledLog;
-    Logger.export = exportLog;
-    Logger.showWidget = showLogWidget;
+  /// Theme animation clipper.
+  final AnimationClipper themeAnimationClipper;
+
+  /// Duration of animated theme reveal transitions.
+  final Duration themeAnimationDuration;
+
+  /// Locale animation clipper.
+  final AnimationClipper localeAnimationClipper;
+
+  /// Duration of animated locale reveal transitions.
+  final Duration localeAnimationDuration;
+
+  /// Global context used by theme extensions.
+  static BuildContext? themeContext;
+
+  /// Global context used by locale extensions.
+  static BuildContext? localeContext;
+
+  /// Changes the global theme at runtime.
+  static void changeAppTheme(String newTheme, [bool withAnimation = true]) {
+    themeContext?.changeAppTheme(newTheme, withAnimation);
   }
+
+  /// Changes the global locale at runtime.
+  static void changeAppLocale(String newLocale, [bool withAnimation = true]) {
+    localeContext?.changeAppLocale(newLocale, withAnimation);
+  }
+
+  @override
+  State<UtilerScope> createState() => _UtilerScopeState();
+}
+
+class _UtilerScopeState extends State<UtilerScope> {
+  late final Future<Widget> _initializedChild;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLogging();
+    _initializedChild = _buildChild();
+  }
+
+  void _initLogging() {
+    Logger.enabled = widget.enabledLog;
+    Logger.export = widget.exportLog;
+    Logger.showWidget = widget.showLogWidget;
+  }
+
+  /// Internal database instance for persistence.
+  final Database _database = Database();
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _getChild(),
+      future: _initializedChild,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return snapshot.data!;
@@ -174,82 +251,94 @@ class UtilerScope extends StatelessWidget {
   }
 
   /// Builds the final widget tree after async initialization.
-  Future<Widget> _getChild() async {
-    Widget finalChild = child;
+  Future<Widget> _buildChild() async {
+    Widget finalChild = widget.child;
 
-    if (lifecycleListener != null) {
+    if (widget.lifecycleListener != null) {
       finalChild = LifecycleHandler(
-        lifecycleListener: lifecycleListener!,
+        lifecycleListener: widget.lifecycleListener!,
         child: finalChild,
       );
     }
 
-    if (showLogWidget) {
+    if (widget.showLogWidget) {
       finalChild = LoggerConsole(child: finalChild);
     }
 
-    if (locales == null &&
-        jsonLocales == null &&
-        themes == null &&
-        jsonThemes == null &&
-        jsonLocalesAddress == null &&
-        jsonThemesAddress == null) {
+    if (widget.locales == null &&
+        widget.jsonLocales == null &&
+        widget.themes == null &&
+        widget.jsonThemes == null &&
+        widget.jsonLocalesAddress == null &&
+        widget.jsonThemesAddress == null) {
       return finalChild;
     }
 
+    final savedTheme = await _getSavedTheme();
+    final savedLocale = await _getSavedLocale();
+
+    if (savedTheme != null) {
+      ValuesRuntime.currentThemeId = savedTheme;
+    }
+    if (savedLocale != null) {
+      ValuesRuntime.currentLocaleId = savedLocale;
+    }
+
     finalChild = ValuesScope(
-      locales: locales,
-      themes: themes,
-      jsonLocales: jsonLocalesAddress != null && jsonLocalesAddress!.isNotEmpty
+      locales: widget.locales,
+      themes: widget.themes,
+      jsonLocales:
+          widget.jsonLocalesAddress != null &&
+              widget.jsonLocalesAddress!.isNotEmpty
           ? await Future.wait<Map<String, dynamic>>(
-              jsonLocalesAddress!.map(_readAssets),
+              widget.jsonLocalesAddress!.map(_readAssets),
             )
-          : jsonLocales,
-      jsonThemes: jsonThemesAddress != null && jsonThemesAddress!.isNotEmpty
+          : widget.jsonLocales,
+      jsonThemes:
+          widget.jsonThemesAddress != null &&
+              widget.jsonThemesAddress!.isNotEmpty
           ? await Future.wait<Map<String, dynamic>>(
-              jsonThemesAddress!.map(_readAssets),
+              widget.jsonThemesAddress!.map(_readAssets),
             )
-          : jsonThemes,
-      initialLocale: await _getSavedLocale(),
-      initialTheme: await _getSavedTheme(),
+          : widget.jsonThemes,
+      initialLocale: savedLocale,
+      initialTheme: savedTheme,
       themeChanged: _themeChanged,
       localeChanged: _localeChanged,
+      themeAnimationClipper: widget.themeAnimationClipper,
+      themeAnimationDuration: widget.themeAnimationDuration,
+      localeAnimationClipper: widget.localeAnimationClipper,
+      localeAnimationDuration: widget.localeAnimationDuration,
       child: finalChild,
     );
 
     return finalChild;
   }
 
-  /// Changes the global theme at runtime.
-  static void changeAppTheme(String newTheme) {
-    themeContext?.changeAppTheme(newTheme);
-  }
-
-  /// Changes the global locale at runtime.
-  static void changeAppLocale(String newLocale) {
-    localeContext?.changeAppLocale(newLocale);
-  }
-
   /// Persists theme selection to secure storage.
   Future<void> _themeChanged(String newTheme) async {
-    await database.putSecure(SecureDatabaseData(key: 'theme', value: newTheme));
+    ValuesRuntime.currentThemeId = newTheme;
+    await _database.putSecure(
+      SecureDatabaseData(key: 'theme', value: newTheme),
+    );
   }
 
   /// Persists locale selection to secure storage.
   Future<void> _localeChanged(String newLocale) async {
-    await database.putSecure(
+    ValuesRuntime.currentLocaleId = newLocale;
+    await _database.putSecure(
       SecureDatabaseData(key: 'locale', value: newLocale),
     );
   }
 
   /// Retrieves the last saved theme.
   Future<String?> _getSavedTheme() async {
-    return (await database.getSecure('theme'))?.value;
+    return (await _database.getSecure('theme'))?.value;
   }
 
   /// Retrieves the last saved locale.
   Future<String?> _getSavedLocale() async {
-    return (await database.getSecure('locale'))?.value;
+    return (await _database.getSecure('locale'))?.value;
   }
 
   /// Reads and parses a JSON asset file into a map.

@@ -28,7 +28,6 @@ class LocaleJsonManager extends InheritedWidget {
     required this.locales,
     required this.currentLocale,
     required this.changeLocale,
-    required this.context,
   });
 
   /// All available localization maps.
@@ -36,9 +35,6 @@ class LocaleJsonManager extends InheritedWidget {
 
   /// The currently active locale map.
   final Map<String, dynamic> currentLocale;
-
-  /// Optional context reference used internally for scope tracking.
-  final BuildContext? context;
 
   /// Callback used to switch the active locale by its identifier.
   final Function(String) changeLocale;
@@ -66,7 +62,6 @@ class LocaleJsonManager extends InheritedWidget {
   /// Triggers rebuild when the locale key changes.
   @override
   bool updateShouldNotify(LocaleJsonManager oldWidget) {
-    UtilerScope.localeContext = context;
-    return currentLocale.keys.first != oldWidget.currentLocale.keys.first;
+    return currentLocale != oldWidget.currentLocale;
   }
 }

@@ -5,7 +5,7 @@
 ///
 /// This allows:
 /// - switching themes by ID
-/// - consistent theme lookup in [ThemeScope] and [ThemeManager]
+/// - consistent theme lookup in `ThemeScope` and `ThemeManager`
 /// - compile-time structure for theme implementations
 ///
 /// Example:

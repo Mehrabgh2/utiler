@@ -44,15 +44,16 @@ extension LocaleExtension on BuildContext {
     return inheritedWidget.currentLocale.values.first as Map<String, dynamic>;
   }
 
-  /// Changes the current application locale by [id].
+  /// Changes the current app locale by its identifier with an animated reveal.
   ///
-  /// Automatically selects the correct implementation based on whether
-  /// JSON-based or typed localization is active.
-  void changeAppLocale(String id) {
+  /// Automatically selects JSON or typed locale system based on configuration.
+  /// The animation origin is the last tap position, or the screen center
+  /// when the locale is changed programmatically.
+  void changeAppLocale(String id, [bool withAnimation = true]) {
     if (ValuesScope.isJsonLocale) {
-      LocaleJsonScope.changeLocale(this, id);
+      LocaleJsonScope.changeLocale(this, id, withAnimation);
     } else {
-      LocaleScope.changeLocale(this, id);
+      LocaleScope.changeLocale(this, id, withAnimation);
     }
   }
 
@@ -80,8 +81,16 @@ extension LocaleExtension on BuildContext {
 ///
 /// Supports dot notation paths like:
 /// ```dart
-/// "home.title".tr
+/// // JSON:
+/// // {
+/// //   'en': {
+/// //     'home': {'appbar': 'Home Screen'}
+/// //   }
+/// // }
+///
+/// 'home.appbar'.tr
 /// ```
+///
 extension LocaleStringExtension on String {
   /// Translates the string using the current JSON locale context.
   ///

@@ -37,14 +37,16 @@ extension ThemeExtension on BuildContext {
     return inheritedWidget.currentTheme.values.first as Map<String, dynamic>;
   }
 
-  /// Changes the current app theme by its identifier.
+  /// Changes the current app theme by its identifier with an animated reveal.
   ///
   /// Automatically selects JSON or typed theme system based on configuration.
-  void changeAppTheme(String id) {
+  /// The animation origin is the last tap position, or the screen center
+  /// when the theme is changed programmatically.
+  void changeAppTheme(String id, [bool withAnimation = true]) {
     if (ValuesScope.isJsonTheme) {
-      ThemeJsonScope.changeTheme(this, id);
+      ThemeJsonScope.changeTheme(this, id, withAnimation);
     } else {
-      ThemeScope.changeTheme(this, id);
+      ThemeScope.changeTheme(this, id, withAnimation);
     }
   }
 
@@ -107,7 +109,7 @@ extension ThemeStringExtension on String {
       }
     }
 
-    return _getColor(current);
+    return _getColor(current?.toString());
   }
 }
 
@@ -117,12 +119,26 @@ extension ThemeStringExtension on String {
 /// - `#RRGGBB`
 /// - `RRGGBB`
 /// - `AARRGGBB`
-Color _getColor(String color) {
+///
+/// Returns `null` when [color] is not a valid hex string.
+Color? _getColor(String? color) {
+  if (color == null || color.isEmpty) {
+    return null;
+  }
+
   color = color.replaceAll('#', '');
 
   if (color.length == 6) {
     color = 'FF$color';
   }
 
-  return Color(int.parse(color, radix: 16));
+  if (color.length != 8) {
+    return null;
+  }
+
+  try {
+    return Color(int.parse(color, radix: 16));
+  } catch (_) {
+    return null;
+  }
 }

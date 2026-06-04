@@ -1,12 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
+import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/locale/locale_animation_model.dart';
 import 'package:utiler/src/values/locale/locale_json_manager.dart';
+import 'package:utiler/src/values/locale/locale_switching_area.dart';
+import 'package:utiler/src/values/values_runtime.dart';
 
 /// A stateful scope widget that manages JSON-based localization state.
 ///
 /// [LocaleJsonScope] is responsible for:
 /// - holding all available locales
 /// - tracking the currently selected locale
-/// - updating locale state using [setState]
+/// - switching locales at runtime with an animated reveal
 /// - providing locale data through [LocaleJsonManager]
 ///
 /// This widget acts as the controller layer for JSON localization.
@@ -29,6 +36,9 @@ class LocaleJsonScope extends StatefulWidget {
     required this.initialLocale,
     this.locales = const [],
     this.localeChanged,
+    this.animationClipper = const AnimationCircleClipper(),
+    this.animationDuration = const Duration(milliseconds: 500),
+    this.useLocaleSwitchingArea = true,
     super.key,
   });
 
@@ -44,14 +54,38 @@ class LocaleJsonScope extends StatefulWidget {
   /// Optional callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Changes the current locale from anywhere in the widget tree.
-  ///
-  /// Looks up the nearest [LocaleJsonManager] and triggers a change.
-  static void changeLocale(BuildContext context, String id) {
-    final inheritedWidget = LocaleJsonManager.of(context);
-    if (inheritedWidget != null) {
-      inheritedWidget.changeLocale(id);
+  /// Locale animation effect
+  final AnimationClipper animationClipper;
+
+  /// Duration of the animated reveal when switching locales.
+  final Duration animationDuration;
+
+  /// When `false`, locale transitions are rendered by [CombinedSwitchingArea].
+  final bool useLocaleSwitchingArea;
+
+  /// Changes the current locale by its identifier with an animated reveal.
+  static void changeLocale(
+    BuildContext context,
+    String id,
+    bool withAnimation,
+  ) {
+    final model = LocaleAnimationInherited.maybeOf(context);
+    if (model != null) {
+      final origin =
+          model.lastPointerDown ?? localeAnimationOrigin(context, model);
+      model.lastPointerDown = null;
+      unawaited(
+        model.changeLocale(
+          localeId: id,
+          origin: origin,
+          withAnimation: withAnimation,
+        ),
+      );
+      return;
     }
+
+    final inheritedWidget = LocaleJsonManager.of(context);
+    inheritedWidget?.changeLocale(id);
   }
 
   /// Returns the currently active locale map.
@@ -71,16 +105,26 @@ class LocaleJsonScope extends StatefulWidget {
 /// Internal state for [LocaleJsonScope].
 ///
 /// Handles locale initialization and updates using [setState].
-class _LocaleJsonScope extends State<LocaleJsonScope> {
+class _LocaleJsonScope extends State<LocaleJsonScope>
+    with SingleTickerProviderStateMixin {
   /// Currently active locale map.
   late Map<String, dynamic> _currentLocale;
+
+  /// Drives the animated reveal transition.
+  late AnimationController _animationController;
+
+  /// Holds screenshot and transition state for locale switching.
+  late LocaleAnimationModel _animationModel;
 
   @override
   void initState() {
     super.initState();
 
+    final effectiveLocaleId =
+        ValuesRuntime.currentLocaleId ?? widget.initialLocale;
+
     int index = widget.locales.indexWhere(
-      (element) => element.keys.first == widget.initialLocale,
+      (element) => element.keys.first == effectiveLocaleId,
     );
 
     if (index == -1) {
@@ -88,15 +132,62 @@ class _LocaleJsonScope extends State<LocaleJsonScope> {
     }
 
     _currentLocale = widget.locales[index];
+    ValuesRuntime.currentLocaleId = _currentLocale.keys.first;
+
+    _animationController = AnimationController(
+      duration: widget.animationDuration,
+      vsync: this,
+    );
+
+    _animationModel = LocaleAnimationModel(
+      controller: _animationController,
+      fixedDuration: widget.animationDuration,
+      getCurrentLocale: () => _currentLocale,
+      clipper: widget.animationClipper,
+      resolveLocale: (id) {
+        final index = widget.locales.indexWhere(
+          (element) => element.keys.first == id,
+        );
+        return index == -1 ? null : widget.locales[index];
+      },
+      applyLocale: _applyLocale,
+      wrapLocaledChild: (locale, child) => LocaleJsonManager(
+        locales: widget.locales,
+        currentLocale: locale,
+        changeLocale: _changeLocale,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationModel.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  /// Triggers an animated locale change by ID.
+  void _changeLocale(String id) {
+    if (!mounted) {
+      return;
+    }
+
+    final origin =
+        _animationModel.lastPointerDown ??
+        localeAnimationOrigin(context, _animationModel);
+    _animationModel.lastPointerDown = null;
+    unawaited(_animationModel.changeLocale(localeId: id, origin: origin));
   }
 
   /// Updates the active locale by its ID.
-  void _changeLocale(String id) {
+  void _applyLocale(String id) {
     final index = widget.locales.indexWhere(
       (element) => element.keys.first == id,
     );
 
     if (index != -1) {
+      ValuesRuntime.currentLocaleId = id;
       setState(() {
         _currentLocale = widget.locales[index];
 
@@ -109,12 +200,24 @@ class _LocaleJsonScope extends State<LocaleJsonScope> {
 
   @override
   Widget build(BuildContext context) {
-    return LocaleJsonManager(
-      locales: widget.locales,
-      currentLocale: _currentLocale,
-      changeLocale: _changeLocale,
-      context: context,
-      child: widget.child,
+    return LocaleAnimationInherited(
+      notifier: _animationModel,
+      child: RepaintBoundary(
+        key: _animationModel.previewContainer,
+        child: Listener(
+          onPointerDown: (event) {
+            _animationModel.lastPointerDown = event.position;
+          },
+          child: LocaleJsonManager(
+            locales: widget.locales,
+            currentLocale: _currentLocale,
+            changeLocale: _changeLocale,
+            child: widget.useLocaleSwitchingArea
+                ? LocaleSwitchingArea(child: widget.child)
+                : widget.child,
+          ),
+        ),
+      ),
     );
   }
 }

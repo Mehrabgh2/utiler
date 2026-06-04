@@ -44,7 +44,7 @@ class Retry {
     int delayMilliseconds = 300,
   }) async {
     int attempts = 0;
-    
+
     while (true) {
       try {
         return await task();

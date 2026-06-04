@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 
 /// A widget that smoothly expands or collapses its [child] with animation.
 ///
-/// [ExpandedableWidget] uses a [SizeTransition] internally to animate the
+/// [ExpandableWidget] uses a [SizeTransition] internally to animate the
 /// visibility of its child based on the [expand] flag.
 ///
 /// When [expand] is `true`, the widget animates from zero height to full size.
@@ -10,13 +12,13 @@ import 'package:flutter/cupertino.dart';
 ///
 /// Example:
 /// ```dart
-/// ExpandedableWidget(
+/// ExpandableWidget(
 ///   expand: isExpanded,
 ///   child: Text('Expandable content'),
 /// )
 /// ```
 class ExpandableWidget extends StatefulWidget {
-  /// Creates an [ExpandedableWidget].
+  /// Creates an [ExpandableWidget].
   const ExpandableWidget({this.expand = false, required this.child, super.key});
 
   /// Whether the widget should be expanded or collapsed.
@@ -45,7 +47,7 @@ class ExpandedSectionState extends State<ExpandableWidget>
   void initState() {
     super.initState();
     prepareAnimations();
-    _runExpandCheck();
+    unawaited(_runExpandCheck());
   }
 
   /// Initializes animation controller and curve.
@@ -62,18 +64,18 @@ class ExpandedSectionState extends State<ExpandableWidget>
   }
 
   /// Runs the appropriate animation based on [widget.expand].
-  void _runExpandCheck() {
+  Future<void> _runExpandCheck() async {
     if (widget.expand) {
-      expandController.forward();
+      await expandController.forward();
     } else {
-      expandController.reverse();
+      await expandController.reverse();
     }
   }
 
   @override
   void didUpdateWidget(ExpandableWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _runExpandCheck();
+    unawaited(_runExpandCheck());
   }
 
   @override

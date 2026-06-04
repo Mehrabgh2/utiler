@@ -6,7 +6,7 @@
 
 ### Added
 
-- `example/` app demonstrating theme, locale, and JSON extensions.
+- `example/` folder demonstrating usage of all package features.
 
 ### Changed
 

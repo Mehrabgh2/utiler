@@ -6,7 +6,6 @@ repository: https://github.com/Mehrabgh2/utiler
 issue_tracker: https://github.com/Mehrabgh2/utiler/issues
 license: MIT
 topics:
-  - flutter
   - utilities
   - localization
   - theming

@@ -27,6 +27,9 @@ import 'package:utiler/src/logger/log_level.dart';
 /// });
 /// ```
 class Logger {
+  /// Prevents instantiation. Use static methods such as [i], [e], and [d].
+  Logger._();
+
   /// Enables or disables all logging output.
   static bool enabled = true;
 

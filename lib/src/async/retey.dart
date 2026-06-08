@@ -31,6 +31,9 @@ import 'dart:async';
 /// }
 /// ```
 class Retry {
+  /// Creates a [Retry] helper with default retry settings.
+  const Retry();
+
   /// Executes [task] and retries it if it throws an exception.
   ///
   /// - [maxAttempts] defines how many retries are allowed after the first failure.

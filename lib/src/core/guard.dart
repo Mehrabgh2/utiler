@@ -23,6 +23,9 @@
 /// print(failed); // null
 /// ```
 class Guard<T> {
+  /// Creates a [Guard] for safely executing functions of type [T].
+  const Guard();
+
   /// Executes [task] safely and returns its result.
   ///
   /// If [task] throws an exception, `null` is returned instead.

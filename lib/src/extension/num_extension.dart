@@ -1,3 +1,5 @@
+import 'package:utiler/src/extension/string_extension.dart';
+
 /// Extensions on [num] providing numeric utilities, formatting helpers,
 /// and conversions.
 ///
@@ -12,12 +14,7 @@ extension NumExtensions on num {
   /// ```dart
   /// print(123.toPersianNumber); // ۱۲۳
   /// ```
-  String get toPersianNumber {
-    return toString().replaceAllMapped(
-      RegExp(r'[0-9]'),
-      (match) => _persianDigits[match.group(0)!]!,
-    );
-  }
+  String get toPersianNumber => toString().toPersianDigits();
 
   /// Returns `true` if this number is within the inclusive range
   /// defined by [min] and [max].
@@ -44,19 +41,3 @@ extension NumExtensions on num {
   /// ```
   double get toDegrees => this * (180 / 3.141592653589793);
 }
-
-/// Mapping of Latin digits to Persian numerals.
-///
-/// Used internally by [NumExtensions.toPersianNumber].
-const Map<String, String> _persianDigits = {
-  '0': '۰',
-  '1': '۱',
-  '2': '۲',
-  '3': '۳',
-  '4': '۴',
-  '5': '۵',
-  '6': '۶',
-  '7': '۷',
-  '8': '۸',
-  '9': '۹',
-};

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:utiler/src/service/api_service.dart';
+import 'package:utiler/utiler.dart';
 
 class ServiceExamples extends StatefulWidget {
   const ServiceExamples({super.key});
@@ -26,12 +26,14 @@ class _ServiceExamplesState extends State<ServiceExamples> {
           onPressed: () async {
             final api = ApiService(
               client: http.Client(),
+              parsers: [],
+              errorParser: ErrorParser(),
               baseUrl: 'https://jsonplaceholder.typicode.com',
               logging: true,
             );
 
             try {
-              final res = await api.get('/posts/1');
+              final res = await api.get<String>('/posts/1');
               setState(() => _status = 'GET /posts/1 -> ${res.statusCode}');
             } catch (e) {
               setState(() => _status = 'Request failed: $e');
@@ -43,5 +45,16 @@ class _ServiceExamplesState extends State<ServiceExamples> {
         Text(_status),
       ],
     );
+  }
+}
+
+class ErrorModel extends ApiError {
+  ErrorModel({required super.code, required super.message});
+}
+
+class ErrorParser extends ApiErrorParser<ErrorModel> {
+  @override
+  ErrorModel fromJson(Map<String, dynamic> json) {
+    return ErrorModel(code: 500, message: 'Internal server error');
   }
 }

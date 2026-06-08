@@ -1,3 +1,21 @@
+## 1.1.0
+
+### Added
+
+- `ValuesAnimationType` enum with fade, slide, scale, zoom, blur, circle, and box transitions for theme/locale changes.
+- Optional per-call `animation` parameter on `changeAppTheme` and `changeAppLocale`.
+- `changeThemeAnimation` / `changeLocaleAnimation` on `UtilerScope` to persist default transition styles.
+- Typed API service layer: `ApiService`, `ApiParser`, `ApiModel`, `ParserRegistry`, `ApiResponse`, and `ApiError` parsing.
+- Comprehensive DartDoc with `@example` blocks across the public API.
+- Tested with Flutter **3.44.1** (Dart **3.12**).
+
+### Changed
+
+- Developed with Flutter **3.44.1**; minimum SDK remains Dart `^3.8.1`, Flutter `>=1.17.0`.
+- Theme/locale animation priority: per-call `animation` → `UtilerScope` default → instant when both are `null`.
+- `themeAnimation` and `localeAnimation` on `UtilerScope` are nullable (no animation by default).
+- Replaced clipper-based transitions with enum-driven `ValuesTransitionBuilder`.
+
 ## 1.0.2
 
 ### Fixed

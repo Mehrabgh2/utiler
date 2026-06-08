@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/combined_switching_area.dart';
 import 'package:utiler/src/values/locale/locale_json_scope.dart';
 import 'package:utiler/src/values/locale/locale_scope.dart';
@@ -22,6 +21,12 @@ import 'package:utiler/src/values/values_runtime.dart';
 /// - JSON themes + JSON locales
 /// - themes only
 /// - locales only
+///
+/// ## Animation defaults
+///
+/// [themeAnimation] and [localeAnimation] set scope-level defaults stored in
+/// [ValuesRuntime]. Per-call overrides on `changeAppTheme` / `changeAppLocale`
+/// take priority; when both are `null`, switches are instant.
 ///
 /// Example:
 /// ```dart
@@ -46,9 +51,9 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     this.initialTheme,
     this.themeChanged,
     this.localeChanged,
-    this.themeAnimationClipper = const AnimationCircleClipper(),
+    this.themeAnimation,
     this.themeAnimationDuration = const Duration(milliseconds: 500),
-    this.localeAnimationClipper = const AnimationCircleClipper(),
+    this.localeAnimation,
     this.localeAnimationDuration = const Duration(milliseconds: 500),
     super.key,
   });
@@ -77,16 +82,22 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Theme animation effect
-  final AnimationClipper themeAnimationClipper;
+  /// Default theme transition for this scope.
+  ///
+  /// Stored in [ValuesRuntime.themeAnimation]. `null` means instant unless
+  /// a per-call [ValuesAnimationType] is passed or [UtilerScope] sets a default.
+  final ValuesAnimationType? themeAnimation;
 
   /// Duration of animated theme reveal transitions.
   ///
   /// Passed to [ThemeScope] and [ThemeJsonScope] when themes are enabled.
   final Duration themeAnimationDuration;
 
-  /// Locale animation effect
-  final AnimationClipper localeAnimationClipper;
+  /// Default locale transition for this scope.
+  ///
+  /// Stored in [ValuesRuntime.localeAnimation]. `null` means instant unless
+  /// a per-call [ValuesAnimationType] is passed or [UtilerScope] sets a default.
+  final ValuesAnimationType? localeAnimation;
 
   /// Duration of animated locale reveal transitions.
   ///
@@ -96,10 +107,14 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// The widget below this scope.
   final Widget child;
 
-  /// Internal flag indicating JSON locale mode.
+  /// Whether the active configuration uses JSON locales.
+  ///
+  /// Set during [build]. Read by locale context extensions to route switch calls.
   static bool isJsonLocale = false;
 
-  /// Internal flag indicating JSON theme mode.
+  /// Whether the active configuration uses JSON themes.
+  ///
+  /// Set during [build]. Read by theme context extensions to route switch calls.
   static bool isJsonTheme = false;
 
   @override
@@ -131,7 +146,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
               locales: jsonLocales!,
               initialLocale: effectiveLocaleId,
               localeChanged: localeChanged,
-              animationClipper: localeAnimationClipper,
+              animation: localeAnimation,
               animationDuration: localeAnimationDuration,
               useLocaleSwitchingArea: false,
               child: switchingChild,
@@ -140,7 +155,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
               locales: locales!,
               initialLocale: effectiveLocaleId,
               localeChanged: localeChanged,
-              animationClipper: localeAnimationClipper,
+              animation: localeAnimation,
               animationDuration: localeAnimationDuration,
               useLocaleSwitchingArea: false,
               child: switchingChild,
@@ -151,7 +166,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
               themes: jsonThemes!,
               initialTheme: effectiveThemeId,
               themeChanged: themeChanged,
-              animationClipper: themeAnimationClipper,
+              animation: themeAnimation,
               animationDuration: themeAnimationDuration,
               useThemeSwitchingArea: false,
               child: localedChild,
@@ -160,7 +175,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
               themes: themes!,
               initialTheme: effectiveThemeId,
               themeChanged: themeChanged,
-              animationClipper: themeAnimationClipper,
+              animation: themeAnimation,
               animationDuration: themeAnimationDuration,
               useThemeSwitchingArea: false,
               child: localedChild,
@@ -170,7 +185,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         locales: locales!,
         initialLocale: initialLocale ?? locales!.first.id,
         localeChanged: localeChanged,
-        animationClipper: localeAnimationClipper,
+        animation: localeAnimation,
         animationDuration: localeAnimationDuration,
         child: child,
       );
@@ -179,7 +194,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         locales: jsonLocales!,
         initialLocale: initialLocale ?? jsonLocales!.first.keys.first,
         localeChanged: localeChanged,
-        animationClipper: localeAnimationClipper,
+        animation: localeAnimation,
         animationDuration: localeAnimationDuration,
         child: child,
       );
@@ -188,7 +203,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         themes: themes!,
         initialTheme: initialTheme ?? themes!.first.id,
         themeChanged: themeChanged,
-        animationClipper: themeAnimationClipper,
+        animation: themeAnimation,
         animationDuration: themeAnimationDuration,
         child: child,
       );
@@ -197,7 +212,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
         themes: jsonThemes!,
         initialTheme: initialTheme ?? jsonThemes!.first.keys.first,
         themeChanged: themeChanged,
-        animationClipper: themeAnimationClipper,
+        animation: themeAnimation,
         animationDuration: themeAnimationDuration,
         child: child,
       );

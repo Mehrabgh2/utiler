@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/theme/theme_animation_model.dart';
 import 'package:utiler/src/values/theme/theme_manager.dart';
 import 'package:utiler/src/values/theme/theme_switching_area.dart';
@@ -34,7 +33,7 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
     required this.initialTheme,
     this.themes = const [],
     this.themeChanged,
-    this.animationClipper = const AnimationCircleClipper(),
+    this.animation,
     this.animationDuration = const Duration(milliseconds: 500),
     this.useThemeSwitchingArea = true,
     super.key,
@@ -52,8 +51,11 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   /// Optional callback triggered when theme changes.
   final Function(String)? themeChanged;
 
-  /// Theme animation effect
-  final AnimationClipper? animationClipper;
+  /// Default theme transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.themeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
+  final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching themes.
   final Duration animationDuration;
@@ -62,18 +64,28 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   final bool useThemeSwitchingArea;
 
   /// Changes the active theme by its ID with an animated reveal.
-  static void changeTheme(BuildContext context, String id, bool withAnimation) {
+  ///
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.themeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// ThemeScope.changeTheme(context, 'dark', ValuesAnimationType.fade);
+  /// ```
+  static void changeTheme(
+    BuildContext context,
+    String id, [
+    ValuesAnimationType? animation,
+  ]) {
     final model = ThemeAnimationInherited.maybeOf(context);
     if (model != null) {
       final origin =
           model.lastPointerDown ?? themeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeTheme(
-          themeId: id,
-          origin: origin,
-          withAnimation: withAnimation,
-        ),
+        model.changeTheme(themeId: id, origin: origin, animation: animation),
       );
       return;
     }
@@ -82,12 +94,12 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
     inheritedWidget?.changeTheme(id);
   }
 
-  /// Returns the currently active theme.
+  /// Returns the currently active typed theme from the nearest [ThemeManager].
   static ThemeValues? getCurrentTheme(BuildContext context) {
     return ThemeManager.of(context)?.currentTheme;
   }
 
-  /// Returns all available themes.
+  /// Returns all themes registered on the nearest [ThemeManager].
   static List<ThemeValues>? getAllThemes(BuildContext context) {
     return ThemeManager.of(context)?.themes;
   }
@@ -133,10 +145,13 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>>
       vsync: this,
     );
 
+    if (widget.animation != null) {
+      ValuesRuntime.themeAnimation = widget.animation;
+    }
+
     _animationModel = ThemeAnimationModel(
       controller: _animationController,
       fixedDuration: widget.animationDuration,
-      clipper: widget.animationClipper,
       getCurrentTheme: () => _currentTheme,
       resolveTheme: (id) {
         final index = widget.themes.indexWhere((theme) => theme.id == id);

@@ -1,39 +1,58 @@
 /// Base interface for API-related exceptions.
 ///
-/// All API-specific errors should implement this interface so they can be
-/// handled in a unified way by networking layers or error mappers.
+/// Thrown by [ApiService] for transport-layer failures such as timeouts and
+/// unexpected runtime errors. Distinct from [ApiError], which represents
+/// structured server error responses returned inside [ApiResponse.result].
+///
+/// Example:
+/// ```dart
+/// try {
+///   await api.get<User>('users/1');
+/// } on ApiTimeoutException catch (e) {
+///   print('Request timed out after ${e.time}s');
+/// } on ApiServerException catch (e) {
+///   print('Unexpected error: ${e.exception}');
+/// }
+/// ```
 abstract interface class ApiException implements Exception {}
 
-/// Represents a server-side API failure.
+/// Represents an unexpected failure while executing an API request.
 ///
-/// This exception is typically thrown when the server returns an error,
-/// or when an unexpected response is received.
+/// Thrown by [ApiService] when a non-timeout error occurs outside the normal
+/// HTTP error-response path (for example, JSON shape mismatches or client bugs).
 ///
-/// Contains:
-/// - [exception]: the original error object
-/// - [stackTrace]: stack trace for debugging purposes
+/// Example:
+/// ```dart
+/// throw ApiServerException(
+///   FormatException('Invalid JSON'),
+///   StackTrace.current,
+/// );
+/// ```
 class ApiServerException implements ApiException {
-  /// Creates a [ApiServerException] with the original [exception]
+  /// Creates an [ApiServerException] with the original [exception]
   /// and [stackTrace].
   ApiServerException(this.exception, this.stackTrace);
 
-  /// Original exception thrown by the server or HTTP client.
+  /// The original exception thrown during the request.
   Object exception;
 
-  /// Stack trace associated with the failure.
+  /// The stack trace captured when the failure occurred.
   StackTrace stackTrace;
 }
 
 /// Represents a timeout error during an API request.
 ///
-/// This exception is thrown when a request exceeds the allowed duration.
+/// Thrown by [ApiService] when a request exceeds the configured [ApiService]
+/// timeout duration.
 ///
-/// Contains:
-/// - [time]: the timeout duration in milliseconds
+/// Example:
+/// ```dart
+/// throw ApiTimeoutException(20); // 20 seconds
+/// ```
 class ApiTimeoutException implements ApiException {
-  /// Creates a [ApiTimeoutException] with the timeout [time].
+  /// Creates an [ApiTimeoutException] with the timeout duration in [time].
   ApiTimeoutException(this.time);
 
-  /// Duration (in milliseconds) after which the request timed out.
+  /// The configured timeout duration in seconds.
   int time;
 }

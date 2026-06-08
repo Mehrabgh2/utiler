@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_animation_model.dart';
 import 'package:utiler/src/values/locale/locale_json_manager.dart';
 import 'package:utiler/src/values/locale/locale_switching_area.dart';
@@ -36,7 +35,7 @@ class LocaleJsonScope extends StatefulWidget {
     required this.initialLocale,
     this.locales = const [],
     this.localeChanged,
-    this.animationClipper = const AnimationCircleClipper(),
+    this.animation,
     this.animationDuration = const Duration(milliseconds: 500),
     this.useLocaleSwitchingArea = true,
     super.key,
@@ -54,8 +53,11 @@ class LocaleJsonScope extends StatefulWidget {
   /// Optional callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Locale animation effect
-  final AnimationClipper animationClipper;
+  /// Default locale transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.localeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
+  final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching locales.
   final Duration animationDuration;
@@ -63,23 +65,29 @@ class LocaleJsonScope extends StatefulWidget {
   /// When `false`, locale transitions are rendered by [CombinedSwitchingArea].
   final bool useLocaleSwitchingArea;
 
-  /// Changes the current locale by its identifier with an animated reveal.
+  /// Changes the current locale by its identifier.
+  ///
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// LocaleJsonScope.changeLocale(context, 'fa', ValuesAnimationType.circle);
+  /// ```
   static void changeLocale(
     BuildContext context,
-    String id,
-    bool withAnimation,
-  ) {
+    String id, [
+    ValuesAnimationType? animation,
+  ]) {
     final model = LocaleAnimationInherited.maybeOf(context);
     if (model != null) {
       final origin =
           model.lastPointerDown ?? localeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeLocale(
-          localeId: id,
-          origin: origin,
-          withAnimation: withAnimation,
-        ),
+        model.changeLocale(localeId: id, origin: origin, animation: animation),
       );
       return;
     }
@@ -139,11 +147,14 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
       vsync: this,
     );
 
+    if (widget.animation != null) {
+      ValuesRuntime.localeAnimation = widget.animation;
+    }
+
     _animationModel = LocaleAnimationModel(
       controller: _animationController,
       fixedDuration: widget.animationDuration,
       getCurrentLocale: () => _currentLocale,
-      clipper: widget.animationClipper,
       resolveLocale: (id) {
         final index = widget.locales.indexWhere(
           (element) => element.keys.first == id,

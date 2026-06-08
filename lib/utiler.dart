@@ -1,3 +1,27 @@
+/// Essential utilities for Dart and Flutter applications.
+///
+/// Utiler bundles everyday helpers into a single import: async rate limiting,
+/// safe error handling, logging, responsive layout widgets, collection
+/// extensions, and optional app-wide theme/locale management via
+/// [UtilerScope].
+///
+/// @example
+/// ```dart
+/// import 'package:utiler/utiler.dart';
+///
+/// void main() {
+///   runApp(
+///     UtilerScope(
+///       enabledLog: true,
+///       themes: myThemes,
+///       locales: myLocales,
+///       child: const MyApp(),
+///     ),
+///   );
+/// }
+/// ```
+library;
+
 export 'src/async/debouncer.dart';
 export 'src/async/retey.dart';
 export 'src/async/throttler.dart';

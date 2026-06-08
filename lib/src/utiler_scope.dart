@@ -90,6 +90,25 @@ import 'package:utiler/src/values/values_scope.dart';
 /// Theme and Locale switching is animated automatically when using
 /// (`BuildContext.changeAppTheme`) or (`UtilerScope.changeAppTheme`).
 ///
+/// #### Animation defaults
+///
+/// Set default transition styles via [themeAnimation] and [localeAnimation].
+/// Durations are controlled by [themeAnimationDuration] and
+/// [localeAnimationDuration]. User preferences are persisted and can be
+/// updated at runtime with [changeThemeAnimation] and
+/// [changeLocaleAnimation].
+///
+/// @example
+/// ```dart
+/// UtilerScope(
+///   themeAnimation: ValuesAnimationType.fade,
+///   themeAnimationDuration: Duration(milliseconds: 300),
+///   localeAnimation: ValuesAnimationType.scale,
+///   localeAnimationDuration: Duration(milliseconds: 400),
+///   child: MyApp(),
+/// );
+/// ```
+///
 /// #### Persistence
 /// Automatically saves:
 /// - Selected theme
@@ -185,20 +204,22 @@ class UtilerScope extends StatefulWidget {
   /// Asset paths for JSON locale files.
   final List<String>? jsonLocalesAddress;
 
-  /// Default theme transition. `null` = instant unless overridden per call.
+  /// Default theme transition applied when [changeAppTheme] is called without
+  /// an explicit animation. `null` means instant unless overridden per call.
   final ValuesAnimationType? themeAnimation;
 
   /// Duration of animated theme reveal transitions.
   final Duration themeAnimationDuration;
 
-  /// Default locale transition. `null` = instant unless overridden per call.
+  /// Default locale transition applied when [changeAppLocale] is called without
+  /// an explicit animation. `null` means instant unless overridden per call.
   final ValuesAnimationType? localeAnimation;
 
   /// Duration of animated locale reveal transitions.
   final Duration localeAnimationDuration;
 
-  static Future<void> Function(ValuesAnimationType)? _persistThemeAnimation;
-  static Future<void> Function(ValuesAnimationType)? _persistLocaleAnimation;
+  static Future<void> Function(ValuesAnimationType?)? _persistThemeAnimation;
+  static Future<void> Function(ValuesAnimationType?)? _persistLocaleAnimation;
 
   /// Global context used by theme extensions.
   static BuildContext? themeContext;
@@ -209,6 +230,15 @@ class UtilerScope extends StatefulWidget {
   /// Changes the global theme at runtime.
   ///
   /// Animation priority: [animation] → [themeAnimation] → instant.
+  ///
+  /// @example
+  /// ```dart
+  /// // Uses the default from UtilerScope.themeAnimation
+  /// UtilerScope.changeAppTheme('dark');
+  ///
+  /// // Overrides with a one-off animation
+  /// UtilerScope.changeAppTheme('light', ValuesAnimationType.fade);
+  /// ```
   static void changeAppTheme(String newTheme, [ValuesAnimationType? animation]) {
     themeContext?.changeAppTheme(newTheme, animation);
   }
@@ -216,6 +246,15 @@ class UtilerScope extends StatefulWidget {
   /// Changes the global locale at runtime.
   ///
   /// Animation priority: [animation] → [localeAnimation] → instant.
+  ///
+  /// @example
+  /// ```dart
+  /// // Uses the default from UtilerScope.localeAnimation
+  /// UtilerScope.changeAppLocale('en');
+  ///
+  /// // Overrides with a one-off animation
+  /// UtilerScope.changeAppLocale('fa', ValuesAnimationType.scale);
+  /// ```
   static void changeAppLocale(
     String newLocale, [
     ValuesAnimationType? animation,
@@ -223,14 +262,34 @@ class UtilerScope extends StatefulWidget {
     localeContext?.changeAppLocale(newLocale, animation);
   }
 
-  /// Updates the theme transition style and persists the user preference.
-  static Future<void> changeThemeAnimation(ValuesAnimationType animation) async {
+  /// Updates the default theme transition style and persists the preference.
+  ///
+  /// Pass `null` to clear the default and use instant transitions.
+  ///
+  /// @example
+  /// ```dart
+  /// await UtilerScope.changeThemeAnimation(ValuesAnimationType.fade);
+  /// await UtilerScope.changeThemeAnimation(null); // instant
+  /// ```
+  static Future<void> changeThemeAnimation(
+    ValuesAnimationType? animation,
+  ) async {
     ValuesRuntime.themeAnimation = animation;
     await _persistThemeAnimation?.call(animation);
   }
 
-  /// Updates the locale transition style and persists the user preference.
-  static Future<void> changeLocaleAnimation(ValuesAnimationType animation) async {
+  /// Updates the default locale transition style and persists the preference.
+  ///
+  /// Pass `null` to clear the default and use instant transitions.
+  ///
+  /// @example
+  /// ```dart
+  /// await UtilerScope.changeLocaleAnimation(ValuesAnimationType.scale);
+  /// await UtilerScope.changeLocaleAnimation(null); // instant
+  /// ```
+  static Future<void> changeLocaleAnimation(
+    ValuesAnimationType? animation,
+  ) async {
     ValuesRuntime.localeAnimation = animation;
     await _persistLocaleAnimation?.call(animation);
   }
@@ -405,15 +464,23 @@ class _UtilerScopeState extends State<UtilerScope> {
     return ValuesAnimationTypeX.parse(value, fallback: widget.localeAnimation);
   }
 
-  Future<void> _persistThemeAnimation(ValuesAnimationType animation) async {
+  Future<void> _persistThemeAnimation(ValuesAnimationType? animation) async {
     ValuesRuntime.themeAnimation = animation;
+    if (animation == null) {
+      await _database.deleteSecure('theme_animation');
+      return;
+    }
     await _database.putSecure(
       SecureDatabaseData(key: 'theme_animation', value: animation.name),
     );
   }
 
-  Future<void> _persistLocaleAnimation(ValuesAnimationType animation) async {
+  Future<void> _persistLocaleAnimation(ValuesAnimationType? animation) async {
     ValuesRuntime.localeAnimation = animation;
+    if (animation == null) {
+      await _database.deleteSecure('locale_animation');
+      return;
+    }
     await _database.putSecure(
       SecureDatabaseData(key: 'locale_animation', value: animation.name),
     );

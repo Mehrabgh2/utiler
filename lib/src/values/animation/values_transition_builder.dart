@@ -5,7 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 
 /// Renders the animated layer during theme/locale transitions.
+///
+/// Applies the visual effect for a single [ValuesAnimationType] to [child],
+/// driven by [controller] progress. Used internally by [ValuesSwitchingStack].
+///
+/// Example:
+/// ```dart
+/// ValuesTransitionBuilder(
+///   controller: animationController,
+///   type: ValuesAnimationType.circle,
+///   origin: tapPosition,
+///   child: themedChild,
+/// )
+/// ```
 class ValuesTransitionBuilder extends StatelessWidget {
+  /// Creates a transition builder for one animated layer.
   const ValuesTransitionBuilder({
     required this.controller,
     required this.type,
@@ -14,9 +28,16 @@ class ValuesTransitionBuilder extends StatelessWidget {
     super.key,
   });
 
+  /// Progress driver for the transition (0.0 → 1.0).
   final Animation<double> controller;
+
+  /// Visual style applied to [child].
   final ValuesAnimationType type;
+
+  /// Screen-space origin for reveal animations (tap point or center).
   final Offset origin;
+
+  /// Content subtree to animate (typically the new theme/locale frame).
   final Widget child;
 
   @override
@@ -176,7 +197,13 @@ class _ValuesPathClipper extends CustomClipper<Path> {
 }
 
 /// Stack used by theme/locale switching areas.
+///
+/// Composites a screenshot ([baseChild] or [transitionChild] depending on
+/// [type]) beneath the animated layer rendered by [ValuesTransitionBuilder].
+/// Used by [ThemeSwitchingArea], [LocaleSwitchingArea], and
+/// [CombinedSwitchingArea].
 class ValuesSwitchingStack extends StatelessWidget {
+  /// Creates a two-layer switching stack for an in-progress transition.
   const ValuesSwitchingStack({
     required this.controller,
     required this.type,
@@ -187,11 +214,22 @@ class ValuesSwitchingStack extends StatelessWidget {
     super.key,
   });
 
+  /// Progress driver shared with [ValuesTransitionBuilder].
   final Animation<double> controller;
+
+  /// Transition style for the animated layer.
   final ValuesAnimationType type;
+
+  /// Screen-space origin for path-based reveals.
   final Offset origin;
+
+  /// Static layer shown below the animation (screenshot or wrapped page).
   final Widget baseChild;
+
+  /// Layer passed to [ValuesTransitionBuilder] (screenshot or wrapped page).
   final Widget transitionChild;
+
+  /// When `true`, [baseChild] is included in the stack beneath the animation.
   final bool isAnimating;
 
   @override

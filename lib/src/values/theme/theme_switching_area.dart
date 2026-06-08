@@ -4,11 +4,17 @@ import 'package:utiler/src/values/theme/theme_animation_model.dart';
 
 /// Internal widget that renders animated theme transitions.
 ///
-/// Mounted automatically by [ThemeScope] and [ThemeJsonScope].
+/// Mounted automatically by [ThemeScope] and [ThemeJsonScope] when
+/// `useThemeSwitchingArea` is `true`. Reads [ThemeAnimationModel] from
+/// [ThemeAnimationInherited] and composites screenshots via
+/// [ValuesSwitchingStack].
+///
 /// App code does not need to use this widget directly.
 class ThemeSwitchingArea extends StatelessWidget {
+  /// Creates a theme switching area around [child].
   const ThemeSwitchingArea({required this.child, super.key});
 
+  /// App content receiving the active theme from [ThemeManager].
   final Widget child;
 
   @override

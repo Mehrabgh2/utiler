@@ -22,6 +22,12 @@ import 'package:utiler/src/values/values_runtime.dart';
 /// - themes only
 /// - locales only
 ///
+/// ## Animation defaults
+///
+/// [themeAnimation] and [localeAnimation] set scope-level defaults stored in
+/// [ValuesRuntime]. Per-call overrides on `changeAppTheme` / `changeAppLocale`
+/// take priority; when both are `null`, switches are instant.
+///
 /// Example:
 /// ```dart
 /// ValuesScope<AppTheme, AppLocale>(
@@ -76,7 +82,10 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Default theme transition. `null` = instant unless overridden per call.
+  /// Default theme transition for this scope.
+  ///
+  /// Stored in [ValuesRuntime.themeAnimation]. `null` means instant unless
+  /// a per-call [ValuesAnimationType] is passed or [UtilerScope] sets a default.
   final ValuesAnimationType? themeAnimation;
 
   /// Duration of animated theme reveal transitions.
@@ -84,7 +93,10 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Passed to [ThemeScope] and [ThemeJsonScope] when themes are enabled.
   final Duration themeAnimationDuration;
 
-  /// Default locale transition. `null` = instant unless overridden per call.
+  /// Default locale transition for this scope.
+  ///
+  /// Stored in [ValuesRuntime.localeAnimation]. `null` means instant unless
+  /// a per-call [ValuesAnimationType] is passed or [UtilerScope] sets a default.
   final ValuesAnimationType? localeAnimation;
 
   /// Duration of animated locale reveal transitions.
@@ -95,10 +107,14 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// The widget below this scope.
   final Widget child;
 
-  /// Internal flag indicating JSON locale mode.
+  /// Whether the active configuration uses JSON locales.
+  ///
+  /// Set during [build]. Read by locale context extensions to route switch calls.
   static bool isJsonLocale = false;
 
-  /// Internal flag indicating JSON theme mode.
+  /// Whether the active configuration uses JSON themes.
+  ///
+  /// Set during [build]. Read by theme context extensions to route switch calls.
   static bool isJsonTheme = false;
 
   @override

@@ -51,7 +51,16 @@ extension LocaleExtension on BuildContext {
   /// The animation origin is the last tap position, or the screen center
   /// when the locale is changed programmatically.
   ///
-  /// Animation priority: [animation] → [UtilerScope.localeAnimation] → instant.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// context.changeAppLocale('fa'); // uses scope default
+  /// context.changeAppLocale('en', ValuesAnimationType.slideLeft); // one-off
+  /// ```
   void changeAppLocale(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonLocale) {
       LocaleJsonScope.changeLocale(this, id, animation);

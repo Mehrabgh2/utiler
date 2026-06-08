@@ -74,7 +74,10 @@ import 'package:utiler/src/logger/logger.dart';
 /// - [PrettyLogger]
 /// - [UtilerScope]
 class LoggerConsole extends StatefulWidget {
+  /// Creates a [LoggerConsole] that wraps [child] with an in-app log overlay.
   const LoggerConsole({required this.child, super.key});
+
+  /// The application widget tree displayed beneath the log console.
   final Widget child;
 
   @override

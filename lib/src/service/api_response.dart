@@ -6,19 +6,20 @@ import 'package:utiler/utiler.dart';
 /// - Strongly typed parsed data ([T]) or typed error ([E]) via [Either]
 /// - HTTP status code
 /// - Optional raw response body for debugging or logging
+/// - Optional per-item parse failures for list endpoints
 ///
 /// - [Right] holds successful parsed data
 /// - [Left] holds a typed error of type [E]
 ///
-/// This class is returned by all methods in [ApiService].
+/// Returned by all HTTP methods on [ApiService].
 ///
 /// Example:
 /// ```dart
-/// final response = await api.get<Post>('posts');
+/// final response = await api.get<Post>('posts/1');
 ///
 /// response.result.fold(
 ///   (error) => print(error.message),
-///   (data)  => print(data),
+///   (data) => print('$data'),
 /// );
 /// ```
 class ApiResponse<T, E extends ApiError> {
@@ -40,13 +41,13 @@ class ApiResponse<T, E extends ApiError> {
   /// Example: `200`, `201`, `404`, `500`
   final int statusCode;
 
-  /// Either a typed error [E] (Left) or parsed data [T] (Right).
+  /// Either a typed error [E] ([Left]) or parsed data [T] ([Right]).
   ///
-  /// Use [result.fold] to handle both cases:
+  /// Example:
   /// ```dart
   /// response.result.fold(
-  ///   (error) => print(error.message),
-  ///   (data)  => print(data),
+  ///   (error) => showError(error.message),
+  ///   (data) => showData(data),
   /// );
   /// ```
   final Either<E, T> result;
@@ -56,19 +57,34 @@ class ApiResponse<T, E extends ApiError> {
   /// Useful for debugging, logging, or inspecting unparsed responses.
   final String? rawBody;
 
-  /// Items that failed parsing — null if not a list response.
+  /// Per-item parse failures for list responses.
+  ///
+  /// When [ApiService] receives a JSON array, each element is parsed
+  /// individually. Items that fail are skipped and recorded here with their
+  /// index, error, and stack trace. `null` for non-list responses.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (response.hasParseErrors) {
+  ///   for (final failure in response.parseErrors!) {
+  ///     print('Item ${failure.index} failed: ${failure.error}');
+  ///   }
+  /// }
+  /// ```
   final List<({int index, Object error, StackTrace stack})>? parseErrors;
 
-  /// Indicates whether the request was successful.
+  /// Whether the request completed with parsed data.
   ///
-  /// Returns `true` if [result] is [Right].
+  /// Returns `true` when [result] is [Right].
   bool get isSuccess => result.isRight;
 
-  /// Indicates whether the request failed with a typed error.
+  /// Whether the request failed with a typed server error.
   ///
-  /// Returns `true` if [result] is [Left].
+  /// Returns `true` when [result] is [Left].
   bool get isFailure => result.isLeft;
 
-  /// Indicates whether the response has any item-level parse errors.
+  /// Whether any list items failed to parse.
+  ///
+  /// Returns `true` when [parseErrors] is non-null and non-empty.
   bool get hasParseErrors => parseErrors?.isNotEmpty ?? false;
 }

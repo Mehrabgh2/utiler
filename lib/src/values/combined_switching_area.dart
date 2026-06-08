@@ -5,11 +5,16 @@ import 'package:utiler/src/values/theme/theme_animation_model.dart';
 
 /// Internal widget that renders animated theme and locale transitions.
 ///
-/// Mounted automatically by the root scope widget.
+/// Mounted automatically by [ValuesScope] when both theme and locale scopes
+/// are active. Coordinates [ThemeAnimationModel] and [LocaleAnimationModel],
+/// preferring theme transitions when both are in progress.
+///
 /// App code does not need to use this widget directly.
 class CombinedSwitchingArea extends StatelessWidget {
+  /// Creates a combined switching area around [child].
   const CombinedSwitchingArea({required this.child, super.key});
 
+  /// App content wrapped with the current theme and locale.
   final Widget child;
 
   @override

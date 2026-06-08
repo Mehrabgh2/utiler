@@ -51,7 +51,10 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
   /// Optional callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Default locale transition. `null` = instant change unless overridden per call.
+  /// Default locale transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.localeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
   final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching locales.
@@ -62,7 +65,15 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
 
   /// Changes the active locale by its ID with an animated reveal.
   ///
-  /// [animation] overrides the default for this call only.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// LocaleScope.changeLocale(context, 'fa', ValuesAnimationType.fade);
+  /// ```
   static void changeLocale(
     BuildContext context,
     String id, [

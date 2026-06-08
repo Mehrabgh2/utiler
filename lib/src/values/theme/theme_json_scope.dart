@@ -53,7 +53,10 @@ class ThemeJsonScope extends StatefulWidget {
   /// Optional callback triggered when theme changes.
   final Function(String)? themeChanged;
 
-  /// Default theme transition. `null` = instant change unless overridden per call.
+  /// Default theme transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.themeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
   final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching themes.
@@ -64,7 +67,15 @@ class ThemeJsonScope extends StatefulWidget {
 
   /// Changes the current theme by its identifier.
   ///
-  /// Animation priority: [animation] → [UtilerScope.themeAnimation] → instant.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.themeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// ThemeJsonScope.changeTheme(context, 'dark', ValuesAnimationType.circle);
+  /// ```
   static void changeTheme(
     BuildContext context,
     String id, [

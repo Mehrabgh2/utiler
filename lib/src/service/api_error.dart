@@ -12,18 +12,13 @@ import 'package:utiler/utiler.dart';
 /// Example:
 /// ```dart
 /// class AppError extends ApiError {
-///   const AppError({required this.message, this.code, this.details});
-///
-///   @override
-///   final String message;
-///
-///   @override
-///   final int? code;
+///   const AppError({required super.message, super.code, this.details});
 ///
 ///   final String? details;
 /// }
 /// ```
 abstract class ApiError {
+  /// Creates an [ApiError] with the given [code] and [message].
   const ApiError({required this.code, required this.message});
 
   /// Optional machine-readable error code returned by the server.
@@ -36,6 +31,7 @@ abstract class ApiError {
   /// Example: `'User not found'`, `'Invalid credentials'`
   final String message;
 
+  /// A debug representation of this error.
   @override
   String toString() => 'ApiError(code: $code, message: $message)';
 }

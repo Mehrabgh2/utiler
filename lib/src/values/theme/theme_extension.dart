@@ -44,7 +44,16 @@ extension ThemeExtension on BuildContext {
   /// The animation origin is the last tap position, or the screen center
   /// when the theme is changed programmatically.
   ///
-  /// Animation priority: [animation] → [UtilerScope.themeAnimation] → instant.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.themeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// context.changeAppTheme('dark'); // uses scope default
+  /// context.changeAppTheme('light', ValuesAnimationType.fade); // one-off
+  /// ```
   void changeAppTheme(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonTheme) {
       ThemeJsonScope.changeTheme(this, id, animation);

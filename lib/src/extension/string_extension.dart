@@ -14,6 +14,11 @@ extension StringExtensions on String {
   bool get isNullOrEmpty => isEmpty || isWhitespaceOnly;
 
   /// Returns `true` if the string contains only whitespace characters.
+  ///
+  /// Example:
+  /// ```dart
+  /// '   '.isWhitespaceOnly // true
+  /// ```
   bool get isWhitespaceOnly => trim().isEmpty;
 
   /// Converts the string to Title Case (each word capitalized).
@@ -49,9 +54,19 @@ extension StringExtensions on String {
   String get capitalize => replaceRange(0, 1, this[0].toUpperCase());
 
   /// Returns a lowercase version of the string.
+  ///
+  /// Example:
+  /// ```dart
+  /// 'Hello'.lowercase // hello
+  /// ```
   String get lowercase => toLowerCase();
 
   /// Returns an uppercase version of the string.
+  ///
+  /// Example:
+  /// ```dart
+  /// 'Hello'.uppercase // HELLO
+  /// ```
   String get uppercase => toUpperCase();
 
   /// Checks whether the string contains [substring], ignoring case.
@@ -103,10 +118,11 @@ extension StringExtensions on String {
   /// '123'.toPersianDigits // ۱۲۳
   /// ```
   String toPersianDigits() {
-    return replaceAllMapped(
-      RegExp(r'[0-9]'),
-      (match) => _persianDigits[match.group(0)!]!,
-    );
+    final buffer = StringBuffer();
+    for (final char in split('')) {
+      buffer.write(_persianDigits[char] ?? char);
+    }
+    return buffer.toString();
   }
 }
 

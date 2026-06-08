@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
 /// Extensions on [BuildContext] to simplify common UI queries.
+///
+/// @example
+/// ```dart
+/// if (context.isPortrait) {
+///   final width = context.size.width;
+/// }
+/// ```
 extension ContextExtensions on BuildContext {
   /// Current device orientation derived from [MediaQuery].
   ///

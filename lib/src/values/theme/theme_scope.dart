@@ -51,7 +51,10 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   /// Optional callback triggered when theme changes.
   final Function(String)? themeChanged;
 
-  /// Default theme transition. `null` = instant change unless overridden per call.
+  /// Default theme transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.themeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
   final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching themes.
@@ -62,7 +65,15 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
 
   /// Changes the active theme by its ID with an animated reveal.
   ///
-  /// [animation] overrides the default for this call only.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.themeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// ThemeScope.changeTheme(context, 'dark', ValuesAnimationType.fade);
+  /// ```
   static void changeTheme(
     BuildContext context,
     String id, [
@@ -87,12 +98,12 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
     inheritedWidget?.changeTheme(id);
   }
 
-  /// Returns the currently active theme.
+  /// Returns the currently active typed theme from the nearest [ThemeManager].
   static ThemeValues? getCurrentTheme(BuildContext context) {
     return ThemeManager.of(context)?.currentTheme;
   }
 
-  /// Returns all available themes.
+  /// Returns all themes registered on the nearest [ThemeManager].
   static List<ThemeValues>? getAllThemes(BuildContext context) {
     return ThemeManager.of(context)?.themes;
   }

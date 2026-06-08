@@ -23,25 +23,36 @@ import 'package:utiler/utiler.dart';
 abstract class ApiParser<T> {
   /// The type this parser handles.
   ///
-  /// Must return [T] — used by [ParserRegistry] to register parsers
-  /// passed via the list constructor without losing type information.
+  /// Used by [ParserRegistry] to register parsers passed via the list
+  /// constructor without losing type information at runtime.
   Type get parseType => T;
 
   /// Constructs an instance of [T] from a JSON map.
   ///
-  /// This method is responsible for transforming raw API response data
-  /// into a strongly typed Dart model.
+  /// Called by [ApiService] after a successful HTTP response is decoded.
   ///
-  /// Implement this using your model's factory constructor:
-  ///
+  /// Example:
   /// ```dart
-  /// factory MyModel.fromJson(Map<String, dynamic> json) { ... }
+  /// @override
+  /// Post fromJson(Map<String, dynamic> json) => Post(
+  ///       id: json['id'] as int,
+  ///       title: json['title'] as String,
+  ///     );
   /// ```
   T fromJson(Map<String, dynamic> json);
 
-  /// Converts the model instance into a JSON map.
+  /// Converts [model] into a JSON map.
   ///
-  /// This is used when sending data back to an API (POST, PUT, PATCH).
+  /// Used when sending data back to an API via POST, PUT, or PATCH.
+  ///
+  /// Example:
+  /// ```dart
+  /// @override
+  /// Map<String, dynamic> toJson(Post model) => {
+  ///       'id': model.id,
+  ///       'title': model.title,
+  ///     };
+  /// ```
   Map<String, dynamic> toJson(T model);
 
   // copyWith is intentionally NOT declared here because its signature must

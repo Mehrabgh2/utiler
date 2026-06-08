@@ -5,6 +5,28 @@ import 'package:utiler/src/values/animation/values_animation_type.dart';
 /// Persists the latest user choice so [ThemeScope], [ThemeJsonScope],
 /// [LocaleScope], and [LocaleJsonScope] do not fall back to stale
 /// [initialTheme] / [initialLocale] when the widget tree is recreated.
+///
+/// Also stores app-wide default animation types set by [UtilerScope] or
+/// individual scope widgets.
+///
+/// ## Animation priority
+///
+/// For both theme and locale switches, the effective animation is:
+/// 1. Per-call `animation` parameter (e.g. on `changeAppTheme`)
+/// 2. [themeAnimation] / [localeAnimation] on this class
+/// 3. Instant change when both are `null`
+///
+/// Example:
+/// ```dart
+/// // UtilerScope sets defaults at startup:
+/// ValuesRuntime.themeAnimation = ValuesAnimationType.circle;
+///
+/// // Per-call override wins:
+/// context.changeAppTheme('dark', ValuesAnimationType.fade);
+///
+/// // Falls back to circle, not instant:
+/// context.changeAppTheme('light');
+/// ```
 abstract final class ValuesRuntime {
   /// Last selected theme id in this app session.
   static String? currentThemeId;
@@ -24,7 +46,10 @@ abstract final class ValuesRuntime {
 
   /// Resolves which theme animation to use.
   ///
-  /// Priority: call [animation] → [themeAnimation] → no animation (`null`).
+  /// Priority:
+  /// 1. [animation] passed to the switch call
+  /// 2. [themeAnimation] from [UtilerScope] or scope widgets
+  /// 3. `null` (instant change) when both are `null`
   static ValuesAnimationType? resolveThemeAnimation({
     ValuesAnimationType? animation,
   }) {
@@ -33,7 +58,10 @@ abstract final class ValuesRuntime {
 
   /// Resolves which locale animation to use.
   ///
-  /// Priority: call [animation] → [localeAnimation] → no animation (`null`).
+  /// Priority:
+  /// 1. [animation] passed to the switch call
+  /// 2. [localeAnimation] from [UtilerScope] or scope widgets
+  /// 3. `null` (instant change) when both are `null`
   static ValuesAnimationType? resolveLocaleAnimation({
     ValuesAnimationType? animation,
   }) {

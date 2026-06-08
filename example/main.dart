@@ -190,7 +190,8 @@ class _HomePageState extends State<_HomePage> {
 
               const SizedBox(height: 20),
               DropdownButtonFormField<ValuesAnimationType?>(
-                value: UtilerScope.themeAnimationType,
+                key: ValueKey(UtilerScope.themeAnimationType),
+                initialValue: UtilerScope.themeAnimationType,
                 decoration: const InputDecoration(
                   labelText: 'Default theme animation',
                   border: OutlineInputBorder(),
@@ -201,21 +202,19 @@ class _HomePageState extends State<_HomePage> {
                     child: Text('instant (none)'),
                   ),
                   ...ValuesAnimationType.values.map(
-                    (type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(type.name),
-                    ),
+                    (type) =>
+                        DropdownMenuItem(value: type, child: Text(type.name)),
                   ),
                 ],
                 onChanged: (value) async {
-                  if (value == null) return;
                   await UtilerScope.changeThemeAnimation(value);
                   setState(() {});
                 },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<ValuesAnimationType?>(
-                value: UtilerScope.localeAnimationType,
+                key: ValueKey(UtilerScope.localeAnimationType),
+                initialValue: UtilerScope.localeAnimationType,
                 decoration: const InputDecoration(
                   labelText: 'Default locale animation',
                   border: OutlineInputBorder(),
@@ -226,14 +225,11 @@ class _HomePageState extends State<_HomePage> {
                     child: Text('instant (none)'),
                   ),
                   ...ValuesAnimationType.values.map(
-                    (type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(type.name),
-                    ),
+                    (type) =>
+                        DropdownMenuItem(value: type, child: Text(type.name)),
                   ),
                 ],
                 onChanged: (value) async {
-                  if (value == null) return;
                   await UtilerScope.changeLocaleAnimation(value);
                   setState(() {});
                 },

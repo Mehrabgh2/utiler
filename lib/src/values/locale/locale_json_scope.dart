@@ -53,7 +53,10 @@ class LocaleJsonScope extends StatefulWidget {
   /// Optional callback triggered when locale changes.
   final Function(String)? localeChanged;
 
-  /// Default locale transition. `null` = instant change unless overridden per call.
+  /// Default locale transition for switches initiated from this scope.
+  ///
+  /// Written to [ValuesRuntime.localeAnimation] when non-null.
+  /// Per-call overrides take priority; instant when both are `null`.
   final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching locales.
@@ -64,7 +67,15 @@ class LocaleJsonScope extends StatefulWidget {
 
   /// Changes the current locale by its identifier.
   ///
-  /// Animation priority: [animation] → [UtilerScope.localeAnimation] → instant.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope] or scope widgets
+  /// 3. Instant change when both are `null`
+  ///
+  /// Example:
+  /// ```dart
+  /// LocaleJsonScope.changeLocale(context, 'fa', ValuesAnimationType.circle);
+  /// ```
   static void changeLocale(
     BuildContext context,
     String id, [

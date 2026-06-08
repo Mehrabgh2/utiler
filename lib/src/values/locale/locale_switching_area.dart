@@ -7,8 +7,10 @@ import 'package:utiler/src/values/locale/locale_animation_model.dart';
 /// Mounted automatically by [LocaleScope] and [LocaleJsonScope] when used
 /// without a theme scope. App code does not need to use this widget directly.
 class LocaleSwitchingArea extends StatelessWidget {
+  /// Creates a locale transition layer around [child].
   const LocaleSwitchingArea({required this.child, super.key});
 
+  /// The widget tree that receives the active locale.
   final Widget child;
 
   @override

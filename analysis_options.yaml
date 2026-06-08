@@ -33,4 +33,4 @@ linter:
     use_super_parameters: true
 
     # Documentation
-    public_member_api_docs: false
+    public_member_api_docs: true

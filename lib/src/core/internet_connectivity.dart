@@ -8,7 +8,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 /// - [connected]: device has an active network connection
 /// - [vpn]: device is connected through a VPN
 /// - [disconnected]: no usable network connection
-enum InternetStatus { connected, vpn, disconnected }
+enum InternetStatus {
+  /// Device has an active network connection.
+  connected,
+
+  /// Device is connected through a VPN.
+  vpn,
+
+  /// No usable network connection.
+  disconnected,
+}
 
 /// A utility for monitoring and checking internet connectivity status.
 ///

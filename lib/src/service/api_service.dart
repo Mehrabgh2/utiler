@@ -19,9 +19,15 @@ import 'package:utiler/utiler.dart';
 /// ```dart
 /// final api = ApiService<AppError>(
 ///   client: http.Client(),
-///   registry: registry,
-///   errorParser: AppErrorParser(),
+///   parsers: [PostParser(), UserParser()],
+///   errorParser: const AppErrorParser(),
 ///   baseUrl: 'https://api.example.com',
+/// );
+///
+/// final response = await api.get<Post>('posts/1');
+/// response.result.fold(
+///   (error) => print(error.message),
+///   (post) => print(post.title),
 /// );
 /// ```
 class ApiService<E extends ApiError> {
@@ -43,13 +49,17 @@ class ApiService<E extends ApiError> {
     Map<String, String> defaultHeaders = const {},
     int timeout = 20,
     bool logging = false,
-  }) : _baseUrl = baseUrl?.trimRight().replaceAll(RegExp(r'/$'), ''),
+  }) : _baseUrl = _normalizeBaseUrl(baseUrl),
        _defaultHeaders = defaultHeaders,
        _timeout = Duration(seconds: timeout),
        _logging = logging,
        _errorParser = errorParser ?? const SimpleApiErrorParser(),
        _registry = ParserRegistry(parsers ?? []);
 
+  /// The underlying HTTP client used for all requests.
+  ///
+  /// Inject a custom client for testing (for example [http.MockClient]) or
+  /// to share connection settings across services.
   final http.Client client;
   final String? _baseUrl;
   final Map<String, String> _defaultHeaders;
@@ -64,15 +74,21 @@ class ApiService<E extends ApiError> {
 
   // ── Public HTTP verbs ──────────────────────────────────────────────────────
 
-  /// Performs an HTTP GET request and parses the response using registered parser.
+  /// Performs an HTTP GET request and parses the response using a registered parser.
   ///
   /// Returns [Right<T>] on success, [Left<E>] on server error.
+  /// Supports nullable response bodies (for example 204 No Content returns `null`).
   ///
-  /// Supports nullable response body (e.g. 204 No Content returns null).
+  /// Throws [ApiTimeoutException] if the request exceeds the configured timeout,
+  /// or [ApiServerException] for unexpected runtime errors.
   ///
-  /// Throws:
-  /// - [ApiTimeoutException] if the request exceeds [_timeout].
-  /// - [ApiServerException] for unexpected runtime errors.
+  /// Example:
+  /// ```dart
+  /// final response = await api.get<User>(
+  ///   'users/42',
+  ///   queryParameters: {'include': 'profile'},
+  /// );
+  /// ```
   Future<ApiResponse<T?, E>> get<T>(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
@@ -90,11 +106,19 @@ class ApiService<E extends ApiError> {
     });
   }
 
-  /// Performs an HTTP POST request and parses the response using registered parser.
+  /// Performs an HTTP POST request and parses the response using a registered parser.
   ///
   /// [data] can be a [Map<String, dynamic>] (auto JSON-encoded) or a [String].
   ///
   /// Returns [Right<T>] on success, [Left<E>] on server error.
+  ///
+  /// Example:
+  /// ```dart
+  /// final response = await api.post<User>(
+  ///   'users',
+  ///   {'name': 'Ada', 'email': 'ada@example.com'},
+  /// );
+  /// ```
   Future<ApiResponse<T?, E>> post<T>(
     String endpoint,
     dynamic data, {
@@ -117,7 +141,9 @@ class ApiService<E extends ApiError> {
     });
   }
 
-  /// Performs an HTTP PUT request and parses the response using registered parser.
+  /// Performs an HTTP PUT request and parses the response using a registered parser.
+  ///
+  /// [data] can be a [Map<String, dynamic>] (auto JSON-encoded) or a [String].
   ///
   /// Returns [Right<T>] on success, [Left<E>] on server error.
   Future<ApiResponse<T?, E>> put<T>(
@@ -142,7 +168,9 @@ class ApiService<E extends ApiError> {
     });
   }
 
-  /// Performs an HTTP PATCH request and parses the response using registered parser.
+  /// Performs an HTTP PATCH request and parses the response using a registered parser.
+  ///
+  /// [data] can be a [Map<String, dynamic>] (auto JSON-encoded) or a [String].
   ///
   /// Returns [Right<T>] on success, [Left<E>] on server error.
   Future<ApiResponse<T?, E>> patch<T>(
@@ -167,7 +195,7 @@ class ApiService<E extends ApiError> {
     });
   }
 
-  /// Performs an HTTP DELETE request and parses the response using registered parser.
+  /// Performs an HTTP DELETE request and parses the response using a registered parser.
   ///
   /// Returns [Right<T>] on success, [Left<E>] on server error.
   Future<ApiResponse<T?, E>> delete<T>(
@@ -189,12 +217,21 @@ class ApiService<E extends ApiError> {
 
   // ── List HTTP verbs ────────────────────────────────────────────────────────
 
-  /// Performs a GET request expecting a JSON ARRAY response.
+  /// Performs a GET request expecting a JSON array response.
   ///
-  /// Each item is parsed using registered parser for [T].
-  /// Corrupted items are skipped and collected in [ApiResponse.parseErrors].
+  /// Each item is parsed using the registered parser for [T].
+  /// Items that fail to parse are skipped and collected in
+  /// [ApiResponse.parseErrors].
   ///
   /// Returns [Right<List<T>>] on success, [Left<E>] on server error.
+  ///
+  /// Example:
+  /// ```dart
+  /// final response = await api.getList<Post>('posts');
+  /// if (response.hasParseErrors) {
+  ///   print('Some items failed to parse');
+  /// }
+  /// ```
   Future<ApiResponse<List<T>, E>> getList<T>(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
@@ -315,7 +352,7 @@ class ApiService<E extends ApiError> {
   ///
   /// response.result.fold(
   ///   (error) => print(error.message),
-  ///   (result) => print(result),
+  ///   (result) => print('$result'),
   /// );
   /// ```
   Future<ApiResponse<T?, E>> uploadFile<T>(
@@ -374,12 +411,13 @@ class ApiService<E extends ApiError> {
   /// final response = await api.downloadFile(
   ///   'reports/monthly.pdf',
   ///   savePath: '/storage/downloads/monthly.pdf',
-  ///   onProgress: (progress) => print('${(progress * 100).toInt()}%'),
+  ///   onProgress: (progress) =>
+  ///       print('${(progress * 100).toInt()}%'),
   /// );
   ///
   /// response.result.fold(
   ///   (error) => print(error.message),
-  ///   (path)  => print('Saved to $path'),
+  ///   (path) => print('Saved to $path'),
   /// );
   /// ```
   Future<ApiResponse<String?, E>> downloadFile(
@@ -454,7 +492,6 @@ class ApiService<E extends ApiError> {
       throw ApiTimeoutException(_timeout.inSeconds);
     } catch (e, st) {
       if (e is ApiTimeoutException) rethrow;
-      print(e.toString());
       throw ApiServerException(e, st);
     }
   }
@@ -664,4 +701,16 @@ class ApiService<E extends ApiError> {
       unawaited(PrettyLogger.api(response));
     }
   }
+}
+
+/// Trims whitespace and removes trailing slashes from [baseUrl].
+String? _normalizeBaseUrl(String? baseUrl) {
+  if (baseUrl == null) {
+    return null;
+  }
+  var normalized = baseUrl.trimRight();
+  while (normalized.endsWith('/')) {
+    normalized = normalized.substring(0, normalized.length - 1);
+  }
+  return normalized;
 }

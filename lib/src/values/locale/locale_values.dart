@@ -15,9 +15,6 @@
 /// }
 /// ```
 abstract class LocaleValues {
-  /// Creates a locale definition. Subclasses must provide [id].
-  const LocaleValues();
-
   /// Unique identifier for the locale (e.g. `"en"`, `"fa"`).
   abstract String id;
 }

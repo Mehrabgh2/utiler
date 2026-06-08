@@ -25,9 +25,6 @@
 /// }
 /// ```
 abstract class ThemeValues {
-  /// Creates a theme definition. Subclasses must provide [id].
-  const ThemeValues();
-
   /// Unique identifier for the theme (e.g. "light", "dark").
   abstract String id;
 }

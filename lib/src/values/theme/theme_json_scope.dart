@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/theme/theme_animation_model.dart';
 import 'package:utiler/src/values/theme/theme_json_manager.dart';
 import 'package:utiler/src/values/theme/theme_switching_area.dart';
@@ -36,7 +35,7 @@ class ThemeJsonScope extends StatefulWidget {
     required this.initialTheme,
     this.themes = const [],
     this.themeChanged,
-    this.animationClipper = const AnimationCircleClipper(),
+    this.animation,
     this.animationDuration = const Duration(milliseconds: 500),
     this.useThemeSwitchingArea = true,
     super.key,
@@ -54,8 +53,8 @@ class ThemeJsonScope extends StatefulWidget {
   /// Optional callback triggered when theme changes.
   final Function(String)? themeChanged;
 
-  /// Theme animation effect
-  final AnimationClipper animationClipper;
+  /// Default theme transition. `null` = instant change unless overridden per call.
+  final ValuesAnimationType? animation;
 
   /// Duration of the animated reveal when switching themes.
   final Duration animationDuration;
@@ -63,8 +62,14 @@ class ThemeJsonScope extends StatefulWidget {
   /// When `false`, theme transitions are rendered by [CombinedSwitchingArea].
   final bool useThemeSwitchingArea;
 
-  /// Changes the current theme by its identifier with an animated reveal.
-  static void changeTheme(BuildContext context, String id, bool withAnimation) {
+  /// Changes the current theme by its identifier.
+  ///
+  /// Animation priority: [animation] → [UtilerScope.themeAnimation] → instant.
+  static void changeTheme(
+    BuildContext context,
+    String id, [
+    ValuesAnimationType? animation,
+  ]) {
     final model = ThemeAnimationInherited.maybeOf(context);
     if (model != null) {
       final origin =
@@ -74,7 +79,7 @@ class ThemeJsonScope extends StatefulWidget {
         model.changeTheme(
           themeId: id,
           origin: origin,
-          withAnimation: withAnimation,
+          animation: animation,
         ),
       );
       return;
@@ -135,11 +140,14 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
       vsync: this,
     );
 
+    if (widget.animation != null) {
+      ValuesRuntime.themeAnimation = widget.animation;
+    }
+
     _animationModel = ThemeAnimationModel(
       controller: _animationController,
       fixedDuration: widget.animationDuration,
       getCurrentTheme: () => _currentTheme,
-      clipper: widget.animationClipper,
       resolveTheme: (id) {
         final index = widget.themes.indexWhere(
           (element) => element.keys.first == id,

@@ -84,11 +84,10 @@ void main() {
       /// ------------------------------------------------------------
       /// Transition animations for theme & locale switching
       /// ------------------------------------------------------------
-      themeAnimationDuration: const Duration(milliseconds: 250),
-      localeAnimationDuration: const Duration(milliseconds: 250),
-
-      themeAnimationClipper: const AnimationCircleClipper(),
-      localeAnimationClipper: const AnimationCircleClipper(),
+      themeAnimation: ValuesAnimationType.fade,
+      localeAnimation: ValuesAnimationType.blurReveal,
+      themeAnimationDuration: const Duration(milliseconds: 400),
+      localeAnimationDuration: const Duration(milliseconds: 400),
 
       /// Root app widget
       child: const _MyApp(),
@@ -109,9 +108,14 @@ class _MyApp extends StatelessWidget {
   }
 }
 
-class _HomePage extends StatelessWidget {
+class _HomePage extends StatefulWidget {
   const _HomePage();
 
+  @override
+  State<_HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<_HomePage> {
   @override
   Widget build(BuildContext context) {
     /// ------------------------------------------------------------
@@ -185,7 +189,56 @@ class _HomePage extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
+              DropdownButtonFormField<ValuesAnimationType?>(
+                value: UtilerScope.themeAnimationType,
+                decoration: const InputDecoration(
+                  labelText: 'Default theme animation',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('instant (none)'),
+                  ),
+                  ...ValuesAnimationType.values.map(
+                    (type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(type.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await UtilerScope.changeThemeAnimation(value);
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<ValuesAnimationType?>(
+                value: UtilerScope.localeAnimationType,
+                decoration: const InputDecoration(
+                  labelText: 'Default locale animation',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('instant (none)'),
+                  ),
+                  ...ValuesAnimationType.values.map(
+                    (type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(type.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await UtilerScope.changeLocaleAnimation(value);
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 20),
               const Text(
                 'This demo shows theme & locale switching using UtilerScope.',
               ),

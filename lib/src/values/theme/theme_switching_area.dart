@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/locale_animation_clipper_bridge.dart';
+import 'package:utiler/src/values/animation/values_transition_builder.dart';
 import 'package:utiler/src/values/theme/theme_animation_model.dart';
 
 /// Internal widget that renders animated theme transitions.
@@ -30,30 +30,13 @@ class ThemeSwitchingArea extends StatelessWidget {
       animWidget = _themedPage(model, model.newTheme);
     }
 
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        child: Stack(
-          children: [
-            if (model.isAnimating)
-              ColoredBox(color: Colors.transparent, child: firstWidget),
-            AnimatedBuilder(
-              animation: model.controller,
-              child: animWidget,
-              builder: (_, child) {
-                return ClipPath(
-                  clipper: AnimationClipperBridge(
-                    clipper: model.clipper,
-                    offset: model.animationOrigin,
-                    sizeRate: model.controller.value,
-                  ),
-                  child: child,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+    return ValuesSwitchingStack(
+      controller: model.controller,
+      type: model.animationType,
+      origin: model.animationOrigin,
+      baseChild: firstWidget,
+      transitionChild: animWidget,
+      isAnimating: model.isAnimating,
     );
   }
 

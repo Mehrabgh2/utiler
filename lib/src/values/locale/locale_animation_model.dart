@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:utiler/src/values/animation/animation_circle_clipper.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
+import 'package:utiler/src/values/values_runtime.dart';
 
 /// Builds a subtree with a specific Locale applied during a transition frame.
 typedef LocalePageWrapper = Widget Function(dynamic locale, Widget child);
@@ -19,8 +19,7 @@ class LocaleAnimationModel extends ChangeNotifier {
     required this.applyLocale,
     required this.getCurrentLocale,
     required this.fixedDuration,
-    required AnimationClipper? clipper,
-  }) : clipper = clipper ?? AnimationCircleClipper();
+  });
 
   final AnimationController controller;
   final LocalePageWrapper wrapLocaledChild;
@@ -32,7 +31,7 @@ class LocaleAnimationModel extends ChangeNotifier {
   final previewContainer = GlobalKey();
 
   ui.Image? image;
-  AnimationClipper clipper;
+  ValuesAnimationType animationType = ValuesAnimationType.circle;
   bool isAnimating = false;
   bool isReversed = false;
   Offset animationOrigin = Offset.zero;
@@ -45,15 +44,17 @@ class LocaleAnimationModel extends ChangeNotifier {
   bool get isTransitioning =>
       oldLocale != null && newLocale != null && oldLocale != newLocale;
 
-  /// Starts an animated Locale switch to [LocaleId].
+  /// Starts a locale switch to [localeId].
   ///
-  /// [origin] is the global position where the reveal animation expands from.
-  /// If an animation is already running, this call is ignored.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope]
+  /// 3. Instant change when both are `null`
   Future<void> changeLocale({
     required String localeId,
     required Offset origin,
     bool isReversed = false,
-    bool? withAnimation,
+    ValuesAnimationType? animation,
     VoidCallback? onAnimationFinish,
   }) async {
     if (controller.isAnimating) {
@@ -69,11 +70,19 @@ class LocaleAnimationModel extends ChangeNotifier {
       return;
     }
 
-    if (withAnimation ?? true) {
-      controller.duration = fixedDuration;
-    } else {
-      controller.duration = const Duration(milliseconds: 10);
+    final effectiveAnimation = ValuesRuntime.resolveLocaleAnimation(
+      animation: animation,
+    );
+
+    if (effectiveAnimation == null) {
+      applyLocale(localeId);
+      onAnimationFinish?.call();
+      notifyListeners();
+      return;
     }
+
+    animationType = effectiveAnimation;
+    controller.duration = fixedDuration;
 
     this.isReversed = isReversed;
 

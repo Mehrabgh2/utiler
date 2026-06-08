@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:utiler/src/values/animation/animation_clipper.dart';
-import 'package:utiler/utiler.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
+import 'package:utiler/src/values/values_runtime.dart';
 
 /// Builds a subtree with a specific theme applied during a transition frame.
 typedef ThemePageWrapper = Widget Function(dynamic theme, Widget child);
@@ -19,8 +19,7 @@ class ThemeAnimationModel extends ChangeNotifier {
     required this.applyTheme,
     required this.getCurrentTheme,
     required this.fixedDuration,
-    required AnimationClipper? clipper,
-  }) : clipper = clipper ?? AnimationCircleClipper();
+  });
 
   final AnimationController controller;
   final ThemePageWrapper wrapThemedChild;
@@ -32,7 +31,7 @@ class ThemeAnimationModel extends ChangeNotifier {
   final previewContainer = GlobalKey();
 
   ui.Image? image;
-  AnimationClipper clipper;
+  ValuesAnimationType animationType = ValuesAnimationType.circle;
   bool isAnimating = false;
   bool isReversed = false;
   Offset animationOrigin = Offset.zero;
@@ -45,15 +44,17 @@ class ThemeAnimationModel extends ChangeNotifier {
   bool get isTransitioning =>
       oldTheme != null && newTheme != null && oldTheme != newTheme;
 
-  /// Starts an animated theme switch to [themeId].
+  /// Starts a theme switch to [themeId].
   ///
-  /// [origin] is the global position where the reveal animation expands from.
-  /// If an animation is already running, this call is ignored.
+  /// Animation priority:
+  /// 1. [animation] passed to this call
+  /// 2. [ValuesRuntime.themeAnimation] from [UtilerScope]
+  /// 3. Instant change when both are `null`
   Future<void> changeTheme({
     required String themeId,
     required Offset origin,
     bool? isReversed,
-    bool? withAnimation,
+    ValuesAnimationType? animation,
     VoidCallback? onAnimationFinish,
   }) async {
     if (controller.isAnimating) {
@@ -69,11 +70,19 @@ class ThemeAnimationModel extends ChangeNotifier {
       return;
     }
 
-    if (withAnimation ?? true) {
-      controller.duration = fixedDuration;
-    } else {
-      controller.duration = const Duration(milliseconds: 10);
+    final effectiveAnimation = ValuesRuntime.resolveThemeAnimation(
+      animation: animation,
+    );
+
+    if (effectiveAnimation == null) {
+      applyTheme(themeId);
+      onAnimationFinish?.call();
+      notifyListeners();
+      return;
     }
+
+    animationType = effectiveAnimation;
+    controller.duration = fixedDuration;
 
     if (isReversed != null) {
       this.isReversed = isReversed;

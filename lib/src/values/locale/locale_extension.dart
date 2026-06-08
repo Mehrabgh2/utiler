@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_json_manager.dart';
 import 'package:utiler/src/values/locale/locale_json_scope.dart';
 import 'package:utiler/src/values/locale/locale_manager.dart';
@@ -49,11 +50,13 @@ extension LocaleExtension on BuildContext {
   /// Automatically selects JSON or typed locale system based on configuration.
   /// The animation origin is the last tap position, or the screen center
   /// when the locale is changed programmatically.
-  void changeAppLocale(String id, [bool withAnimation = true]) {
+  ///
+  /// Animation priority: [animation] → [UtilerScope.localeAnimation] → instant.
+  void changeAppLocale(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonLocale) {
-      LocaleJsonScope.changeLocale(this, id, withAnimation);
+      LocaleJsonScope.changeLocale(this, id, animation);
     } else {
-      LocaleScope.changeLocale(this, id, withAnimation);
+      LocaleScope.changeLocale(this, id, animation);
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/theme/theme_json_manager.dart';
 import 'package:utiler/src/values/theme/theme_json_scope.dart';
 import 'package:utiler/src/values/theme/theme_manager.dart';
@@ -42,11 +43,13 @@ extension ThemeExtension on BuildContext {
   /// Automatically selects JSON or typed theme system based on configuration.
   /// The animation origin is the last tap position, or the screen center
   /// when the theme is changed programmatically.
-  void changeAppTheme(String id, [bool withAnimation = true]) {
+  ///
+  /// Animation priority: [animation] → [UtilerScope.themeAnimation] → instant.
+  void changeAppTheme(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonTheme) {
-      ThemeJsonScope.changeTheme(this, id, withAnimation);
+      ThemeJsonScope.changeTheme(this, id, animation);
     } else {
-      ThemeScope.changeTheme(this, id, withAnimation);
+      ThemeScope.changeTheme(this, id, animation);
     }
   }
 

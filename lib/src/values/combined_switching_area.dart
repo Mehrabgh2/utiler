@@ -1,7 +1,5 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:utiler/src/values/animation/locale_animation_clipper_bridge.dart';
+import 'package:utiler/src/values/animation/values_transition_builder.dart';
 import 'package:utiler/src/values/locale/locale_animation_model.dart';
 import 'package:utiler/src/values/theme/theme_animation_model.dart';
 
@@ -46,34 +44,16 @@ class CombinedSwitchingArea extends StatelessWidget {
         );
       }
 
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Material(
-          child: Stack(
-            children: [
-              if (themeModel.isAnimating)
-                ColoredBox(color: Colors.transparent, child: firstWidget),
-              AnimatedBuilder(
-                animation: themeModel.controller,
-                child: animWidget,
-                builder: (_, child) {
-                  return ClipPath(
-                    clipper: AnimationClipperBridge(
-                      clipper: themeModel.clipper,
-                      offset: themeModel.animationOrigin,
-                      sizeRate: themeModel.controller.value,
-                    ),
-                    child: child,
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
+      return ValuesSwitchingStack(
+        controller: themeModel.controller,
+        type: themeModel.animationType,
+        origin: themeModel.animationOrigin,
+        baseChild: firstWidget,
+        transitionChild: animWidget,
+        isAnimating: themeModel.isAnimating,
       );
     }
 
-    // locale transitioning
     late final Widget firstWidget;
     late final Widget animWidget;
 
@@ -93,17 +73,13 @@ class CombinedSwitchingArea extends StatelessWidget {
       );
     }
 
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        child: Stack(
-          children: [
-            if (localeModel.isAnimating)
-              ColoredBox(color: Colors.transparent, child: firstWidget),
-            _getBlurWidgetEase(animWidget, localeModel),
-          ],
-        ),
-      ),
+    return ValuesSwitchingStack(
+      controller: localeModel.controller,
+      type: localeModel.animationType,
+      origin: localeModel.animationOrigin,
+      baseChild: firstWidget,
+      transitionChild: animWidget,
+      isAnimating: localeModel.isAnimating,
     );
   }
 
@@ -119,35 +95,6 @@ class CombinedSwitchingArea extends StatelessWidget {
         locale ?? localeModel.getCurrentLocale(),
         child,
       ),
-    );
-  }
-
-  Widget _getBlurWidgetEase(Widget widget, LocaleAnimationModel model) {
-    return AnimatedBuilder(
-      animation: model.controller,
-      child: widget,
-      builder: (_, child) {
-        final curved = CurvedAnimation(
-          parent: model.controller,
-          curve: Curves.easeInOutCubic,
-        ).value;
-        final blur = (1.0 - curved) * 40;
-        return ImageFiltered(
-          imageFilter: ui.ImageFilter.blur(
-            sigmaX: blur,
-            sigmaY: blur,
-            tileMode: TileMode.decal,
-          ),
-          child: ClipPath(
-            clipper: AnimationClipperBridge(
-              clipper: model.clipper,
-              offset: model.animationOrigin,
-              sizeRate: curved,
-            ),
-            child: child,
-          ),
-        );
-      },
     );
   }
 }

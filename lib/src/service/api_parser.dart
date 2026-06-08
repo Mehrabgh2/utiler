@@ -21,6 +21,9 @@ import 'package:utiler/utiler.dart';
 /// }
 /// ```
 abstract class ApiParser<T> {
+  /// Creates a parser implementation for models of type [T].
+  const ApiParser();
+
   /// The type this parser handles.
   ///
   /// Used by [ParserRegistry] to register parsers passed via the list

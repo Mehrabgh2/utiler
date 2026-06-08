@@ -61,10 +61,14 @@ class ValuesTransitionBuilder extends StatelessWidget {
           );
         } else {
           result = switch (type) {
-            ValuesAnimationType.fadeIn ||
-            ValuesAnimationType.fade => Opacity(opacity: progress, child: result),
-            ValuesAnimationType.fadeOut =>
-              Opacity(opacity: 1 - progress, child: result),
+            ValuesAnimationType.fadeIn || ValuesAnimationType.fade => Opacity(
+              opacity: progress,
+              child: result,
+            ),
+            ValuesAnimationType.fadeOut => Opacity(
+              opacity: 1 - progress,
+              child: result,
+            ),
             ValuesAnimationType.slideUp => _slide(
               result,
               context,

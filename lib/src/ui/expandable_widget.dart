@@ -37,6 +37,9 @@ class ExpandableWidget extends StatefulWidget {
 /// transition between expanded and collapsed states.
 class ExpandedSectionState extends State<ExpandableWidget>
     with SingleTickerProviderStateMixin {
+  /// Creates state that drives [ExpandableWidget] expand/collapse animation.
+  ExpandedSectionState();
+
   /// Controls the expansion animation.
   late AnimationController expandController;
 

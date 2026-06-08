@@ -85,11 +85,7 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
           model.lastPointerDown ?? localeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeLocale(
-          localeId: id,
-          origin: origin,
-          animation: animation,
-        ),
+        model.changeLocale(localeId: id, origin: origin, animation: animation),
       );
       return;
     }

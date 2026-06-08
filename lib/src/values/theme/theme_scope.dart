@@ -85,11 +85,7 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
           model.lastPointerDown ?? themeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeTheme(
-          themeId: id,
-          origin: origin,
-          animation: animation,
-        ),
+        model.changeTheme(themeId: id, origin: origin, animation: animation),
       );
       return;
     }

@@ -16,6 +16,9 @@ import 'package:flutter/material.dart';
 /// )
 /// ```
 class Gaps {
+  /// Prevents instantiation. Use static gap widgets such as [v16] and [h8].
+  const Gaps._();
+
   /// Horizontal gap of 4 logical pixels.
   static const SizedBox h4 = SizedBox(width: 4);
 

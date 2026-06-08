@@ -239,7 +239,10 @@ class UtilerScope extends StatefulWidget {
   /// // Overrides with a one-off animation
   /// UtilerScope.changeAppTheme('light', ValuesAnimationType.fade);
   /// ```
-  static void changeAppTheme(String newTheme, [ValuesAnimationType? animation]) {
+  static void changeAppTheme(
+    String newTheme, [
+    ValuesAnimationType? animation,
+  ]) {
     themeContext?.changeAppTheme(newTheme, animation);
   }
 

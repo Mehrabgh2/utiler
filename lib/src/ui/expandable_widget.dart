@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 
 /// A widget that smoothly expands or collapses its [child] with animation.
 ///
-/// [ExpandableWidget] uses a [SizeTransition] internally to animate the
+/// [ExpandableWidget] uses [ClipRect] and [Align] internally to animate the
 /// visibility of its child based on the [expand] flag.
 ///
 /// When [expand] is `true`, the widget animates from zero height to full size.
@@ -43,7 +43,7 @@ class ExpandedSectionState extends State<ExpandableWidget>
   /// Controls the expansion animation.
   late AnimationController expandController;
 
-  /// Curved animation applied to the size transition.
+  /// Curved animation applied to the expand/collapse transition.
   late Animation<double> animation;
 
   @override
@@ -89,9 +89,17 @@ class ExpandedSectionState extends State<ExpandableWidget>
 
   @override
   Widget build(BuildContext context) {
-    return SizeTransition(
-      alignment: Alignment.bottomCenter,
-      sizeFactor: animation,
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: animation.value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
       child: widget.child,
     );
   }

@@ -1,3 +1,16 @@
+## 1.2.2
+
+### Fixed
+
+- `ExpandableWidget` uses `ClipRect` + `Align` instead of deprecated `SizeTransition.axisAlignment`
+
+## 1.2.1
+
+### Fixed
+
+- `ExpandableWidget` uses `axisAlignment` on `SizeTransition` again for compatibility with Flutter **&lt; 3.41** (e.g. 3.32).
+- Minimum Flutter constraint restored to `>=1.17.0`.
+
 ## 1.1.0
 
 ### Added
@@ -11,7 +24,7 @@
 
 ### Changed
 
-- Developed with Flutter **3.44.1**; minimum SDK remains Dart `^3.8.1`, Flutter `>=1.17.0`.
+- Developed with Flutter **3.44.1**; minimum SDK Dart `^3.8.1`.
 - Theme/locale animation priority: per-call `animation` → `UtilerScope` default → instant when both are `null`.
 - `themeAnimation` and `localeAnimation` on `UtilerScope` are nullable (no animation by default).
 - Replaced clipper-based transitions with enum-driven `ValuesTransitionBuilder`.

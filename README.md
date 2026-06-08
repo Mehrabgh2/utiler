@@ -161,5 +161,5 @@ Generates a ready-to-use feature structure inside `lib/features/`.
 
 If you need anything or have an offer, you can reach me at:
 
-- LinkedIn: https://www.linkedin.com/in/mehrab-ghasab
+- LinkedIn: https://linkedin.com/in/mehrab-ghasab-a3253814a
 - Telegram: https://t.me/mehrabgh1

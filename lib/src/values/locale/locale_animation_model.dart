@@ -90,7 +90,7 @@ class LocaleAnimationModel extends ChangeNotifier {
   /// [animation] overrides [ValuesRuntime.localeAnimation] for this call only.
   ///
   /// [onAnimationFinish] runs after the switch completes (animated or instant).
-  Future<void> changeLocale({
+  Future<void> changeAppLocale({
     required String localeId,
     required Offset origin,
     bool isReversed = false,

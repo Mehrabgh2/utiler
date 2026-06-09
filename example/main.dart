@@ -159,28 +159,28 @@ class _HomePageState extends State<_HomePage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      UtilerScope.changeAppTheme('light');
+                      Utiler.changeAppTheme('light');
                       context.changeAppTheme('light');
                     },
                     child: const Text('Theme: light'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      UtilerScope.changeAppTheme('dark');
+                      Utiler.changeAppTheme('dark');
                       context.changeAppTheme('dark');
                     },
                     child: const Text('Theme: dark'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      UtilerScope.changeAppLocale('en');
+                      Utiler.changeAppLocale('en');
                       context.changeAppLocale('en');
                     },
                     child: const Text('Locale: en'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      UtilerScope.changeAppLocale('fa');
+                      Utiler.changeAppLocale('fa');
                       context.changeAppLocale('fa');
                     },
                     child: const Text('Locale: fa'),
@@ -190,8 +190,8 @@ class _HomePageState extends State<_HomePage> {
 
               const SizedBox(height: 20),
               DropdownButtonFormField<ValuesAnimationType?>(
-                key: ValueKey(UtilerScope.themeAnimationType),
-                initialValue: UtilerScope.themeAnimationType,
+                key: ValueKey(Utiler.themeAnimationType),
+                initialValue: Utiler.themeAnimationType,
                 decoration: const InputDecoration(
                   labelText: 'Default theme animation',
                   border: OutlineInputBorder(),
@@ -207,14 +207,14 @@ class _HomePageState extends State<_HomePage> {
                   ),
                 ],
                 onChanged: (value) async {
-                  await UtilerScope.changeThemeAnimation(value);
+                  await Utiler.changeThemeAnimation(value);
                   setState(() {});
                 },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<ValuesAnimationType?>(
-                key: ValueKey(UtilerScope.localeAnimationType),
-                initialValue: UtilerScope.localeAnimationType,
+                key: ValueKey(Utiler.localeAnimationType),
+                initialValue: Utiler.localeAnimationType,
                 decoration: const InputDecoration(
                   labelText: 'Default locale animation',
                   border: OutlineInputBorder(),
@@ -230,13 +230,13 @@ class _HomePageState extends State<_HomePage> {
                   ),
                 ],
                 onChanged: (value) async {
-                  await UtilerScope.changeLocaleAnimation(value);
+                  await Utiler.changeLocaleAnimation(value);
                   setState(() {});
                 },
               ),
               const SizedBox(height: 20),
               const Text(
-                'This demo shows theme & locale switching using UtilerScope.',
+                'This demo shows theme & locale switching using Utiler.',
               ),
             ],
           ),

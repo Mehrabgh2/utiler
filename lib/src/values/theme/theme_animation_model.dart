@@ -90,7 +90,7 @@ class ThemeAnimationModel extends ChangeNotifier {
   /// [animation] overrides [ValuesRuntime.themeAnimation] for this call only.
   ///
   /// [onAnimationFinish] runs after the switch completes (animated or instant).
-  Future<void> changeTheme({
+  Future<void> changeAppTheme({
     required String themeId,
     required Offset origin,
     bool? isReversed,

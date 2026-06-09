@@ -74,9 +74,9 @@ class LocaleJsonScope extends StatefulWidget {
   ///
   /// Example:
   /// ```dart
-  /// LocaleJsonScope.changeLocale(context, 'fa', ValuesAnimationType.circle);
+  /// LocaleJsonScope.changeAppLocale(context, 'fa', ValuesAnimationType.circle);
   /// ```
-  static void changeLocale(
+  static void changeAppLocale(
     BuildContext context,
     String id, [
     ValuesAnimationType? animation,
@@ -87,13 +87,17 @@ class LocaleJsonScope extends StatefulWidget {
           model.lastPointerDown ?? localeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeLocale(localeId: id, origin: origin, animation: animation),
+        model.changeAppLocale(
+          localeId: id,
+          origin: origin,
+          animation: animation,
+        ),
       );
       return;
     }
 
     final inheritedWidget = LocaleJsonManager.of(context);
-    inheritedWidget?.changeLocale(id);
+    inheritedWidget?.changeAppLocale(id);
   }
 
   /// Returns the currently active locale map.
@@ -165,7 +169,7 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
       wrapLocaledChild: (locale, child) => LocaleJsonManager(
         locales: widget.locales,
         currentLocale: locale,
-        changeLocale: _changeLocale,
+        changeAppLocale: _changeLocale,
         child: child,
       ),
     );
@@ -188,7 +192,7 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
         _animationModel.lastPointerDown ??
         localeAnimationOrigin(context, _animationModel);
     _animationModel.lastPointerDown = null;
-    unawaited(_animationModel.changeLocale(localeId: id, origin: origin));
+    unawaited(_animationModel.changeAppLocale(localeId: id, origin: origin));
   }
 
   /// Updates the active locale by its ID.
@@ -222,7 +226,7 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
           child: LocaleJsonManager(
             locales: widget.locales,
             currentLocale: _currentLocale,
-            changeLocale: _changeLocale,
+            changeAppLocale: _changeLocale,
             child: widget.useLocaleSwitchingArea
                 ? LocaleSwitchingArea(child: widget.child)
                 : widget.child,

@@ -58,7 +58,7 @@
 
 ### Changed
 
-- `ThemeScope.changeTheme` forwards `withAnimation` consistently.
+- `ThemeScope.changeAppTheme` forwards `withAnimation` consistently.
 
 ## 1.0.1
 

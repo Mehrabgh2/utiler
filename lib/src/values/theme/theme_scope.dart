@@ -72,9 +72,9 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
   ///
   /// Example:
   /// ```dart
-  /// ThemeScope.changeTheme(context, 'dark', ValuesAnimationType.fade);
+  /// ThemeScope.changeAppTheme(context, 'dark', ValuesAnimationType.fade);
   /// ```
-  static void changeTheme(
+  static void changeAppTheme(
     BuildContext context,
     String id, [
     ValuesAnimationType? animation,
@@ -85,13 +85,13 @@ class ThemeScope<T extends ThemeValues> extends StatefulWidget {
           model.lastPointerDown ?? themeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeTheme(themeId: id, origin: origin, animation: animation),
+        model.changeAppTheme(themeId: id, origin: origin, animation: animation),
       );
       return;
     }
 
     final inheritedWidget = ThemeManager.of(context);
-    inheritedWidget?.changeTheme(id);
+    inheritedWidget?.changeAppTheme(id);
   }
 
   /// Returns the currently active typed theme from the nearest [ThemeManager].
@@ -161,7 +161,7 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>>
       wrapThemedChild: (theme, child) => ThemeManager<ThemeValues>(
         themes: widget.themes,
         currentTheme: theme as ThemeValues,
-        changeTheme: _changeTheme,
+        changeAppTheme: _changeTheme,
         child: child,
       ),
     );
@@ -184,7 +184,7 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>>
         _animationModel.lastPointerDown ??
         themeAnimationOrigin(context, _animationModel);
     _animationModel.lastPointerDown = null;
-    unawaited(_animationModel.changeTheme(themeId: id, origin: origin));
+    unawaited(_animationModel.changeAppTheme(themeId: id, origin: origin));
   }
 
   /// Updates the active theme by ID.
@@ -216,7 +216,7 @@ class _ThemeScope<T extends ThemeValues> extends State<ThemeScope<T>>
           child: ThemeManager<ThemeValues>(
             themes: widget.themes,
             currentTheme: _currentTheme,
-            changeTheme: _changeTheme,
+            changeAppTheme: _changeTheme,
             child: widget.useThemeSwitchingArea
                 ? ThemeSwitchingArea(child: widget.child)
                 : widget.child,

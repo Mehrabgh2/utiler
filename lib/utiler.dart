@@ -61,6 +61,7 @@ export 'src/ui/gaps.dart';
 export 'src/ui/inkwell_button.dart';
 export 'src/ui/keyboard_dismiss.dart';
 export 'src/ui/responsive.dart';
+export 'src/utiler.dart';
 export 'src/utiler_scope.dart';
 export 'src/validation/form_validator.dart';
 export 'src/values/animation/values_animation_type.dart';

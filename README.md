@@ -114,15 +114,15 @@ context.changeAppTheme('dark', ValuesAnimationType.circle);
 context.changeAppLocale('fa', ValuesAnimationType.blurReveal);
 
 // Without BuildContext
-UtilerScope.changeAppTheme('dark', ValuesAnimationType.circle);
-UtilerScope.changeAppLocale('en');
+Utiler.changeAppTheme('dark', ValuesAnimationType.circle);
+Utiler.changeAppLocale('en');
 ```
 
-**Animation priority:** per-call `animation` → `UtilerScope` default → instant when both are `null`.
+**Animation priority:** per-call `animation` → `Utiler` default → instant when both are `null`.
 
 ```dart
-await UtilerScope.changeThemeAnimation(ValuesAnimationType.circle);
-await UtilerScope.changeThemeAnimation(null); // instant
+await Utiler.changeThemeAnimation(ValuesAnimationType.circle);
+await Utiler.changeThemeAnimation(null); // instant
 ```
 
 ### Access Values
@@ -137,14 +137,14 @@ context.appJsonLocale;
 ### Access App Config
 
 ```dart
-final url = UtilerScope.config.active.require<String>('api_base_url');
-final timeout = UtilerScope.config.active.get<int>('timeout_seconds', fallback: 10);
+final url = Utiler.config.active.require<String>('api_base_url');
+final timeout = Utiler.config.active.get<int>('timeout_seconds', fallback: 10);
 ```
 
 ### Access Feature Flags
 
 ```dart
-if (UtilerScope.flags.isEnabled('new_checkout')) {
+if (Utiler.flags.isEnabled('new_checkout')) {
   // show new flow
 }
 ```

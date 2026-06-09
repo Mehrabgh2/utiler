@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/utiler_scope.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/theme/theme_json_manager.dart';
@@ -56,9 +57,9 @@ extension ThemeExtension on BuildContext {
   /// ```
   void changeAppTheme(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonTheme) {
-      ThemeJsonScope.changeTheme(this, id, animation);
+      ThemeJsonScope.changeAppTheme(this, id, animation);
     } else {
-      ThemeScope.changeTheme(this, id, animation);
+      ThemeScope.changeAppTheme(this, id, animation);
     }
   }
 
@@ -93,11 +94,11 @@ extension ThemeStringExtension on String {
   ///
   /// Returns [Colors.white] as fallback if resolution fails.
   Color get cr {
-    if (UtilerScope.themeContext == null) {
+    if (Utiler.themeContext == null) {
       return Colors.white;
     }
 
-    final inheritedWidget = ThemeJsonManager.of(UtilerScope.themeContext!);
+    final inheritedWidget = ThemeJsonManager.of(Utiler.themeContext!);
 
     if (inheritedWidget == null) return Colors.white;
 

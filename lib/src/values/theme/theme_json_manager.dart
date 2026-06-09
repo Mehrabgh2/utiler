@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/values/theme/theme_values.dart';
 
 /// An [InheritedWidget] that provides JSON-based theme data to the widget tree.
@@ -16,7 +16,7 @@ import 'package:utiler/src/values/theme/theme_values.dart';
 /// ThemeJsonManager(
 ///   themes: themes,
 ///   currentTheme: themes.first,
-///   changeTheme: (id) {},
+///   changeAppTheme: (id) {},
 ///   child: MyApp(),
 /// )
 /// ```
@@ -27,7 +27,7 @@ class ThemeJsonManager extends InheritedWidget {
     required super.child,
     required this.themes,
     required this.currentTheme,
-    required this.changeTheme,
+    required this.changeAppTheme,
   });
 
   /// All available themes as JSON maps.
@@ -37,21 +37,21 @@ class ThemeJsonManager extends InheritedWidget {
   final Map<String, dynamic> currentTheme;
 
   /// Callback used to switch theme by identifier.
-  final Function(String) changeTheme;
+  final Function(String) changeAppTheme;
 
   /// Retrieves the nearest [ThemeJsonManager] from the widget tree.
   static ThemeJsonManager? of<T extends ThemeValues>(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ThemeJsonManager>();
   }
 
-  /// Wraps the child widget and updates [UtilerScope.themeContext].
+  /// Wraps the child widget and updates [Utiler.themeContext].
   ///
   /// This allows global access to the current theme context.
   @override
   Widget get child {
     return Builder(
       builder: (context) {
-        UtilerScope.themeContext = context;
+        Utiler.themeContext = context;
         return super.child;
       },
     );

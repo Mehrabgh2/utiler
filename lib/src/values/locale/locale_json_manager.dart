@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/utiler.dart';
 
 /// An [InheritedWidget] that provides JSON-based localization data
 /// to the widget tree.
@@ -16,7 +16,7 @@ import 'package:utiler/src/utiler_scope.dart';
 /// LocaleJsonManager(
 ///   locales: locales,
 ///   currentLocale: locales.first,
-///   changeLocale: (id) {},
+///   changeAppLocale: (id) {},
 ///   child: MyApp(),
 /// )
 /// ```
@@ -27,7 +27,7 @@ class LocaleJsonManager extends InheritedWidget {
     required super.child,
     required this.locales,
     required this.currentLocale,
-    required this.changeLocale,
+    required this.changeAppLocale,
   });
 
   /// All available localization maps.
@@ -37,21 +37,21 @@ class LocaleJsonManager extends InheritedWidget {
   final Map<String, dynamic> currentLocale;
 
   /// Callback used to switch the active locale by its identifier.
-  final Function(String) changeLocale;
+  final Function(String) changeAppLocale;
 
   /// Retrieves the nearest [LocaleJsonManager] instance from the widget tree.
   static LocaleJsonManager? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<LocaleJsonManager>();
   }
 
-  /// Wraps the inherited child to update [UtilerScope.localeContext].
+  /// Wraps the inherited child to update [Utiler.localeContext].
   ///
   /// This ensures global access to the current locale context.
   @override
   Widget get child {
     return Builder(
       builder: (context) {
-        UtilerScope.localeContext = context;
+        Utiler.localeContext = context;
         return super.child;
       },
     );

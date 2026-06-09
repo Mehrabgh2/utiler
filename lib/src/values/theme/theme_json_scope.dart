@@ -74,9 +74,9 @@ class ThemeJsonScope extends StatefulWidget {
   ///
   /// Example:
   /// ```dart
-  /// ThemeJsonScope.changeTheme(context, 'dark', ValuesAnimationType.circle);
+  /// ThemeJsonScope.changeAppTheme(context, 'dark', ValuesAnimationType.circle);
   /// ```
-  static void changeTheme(
+  static void changeAppTheme(
     BuildContext context,
     String id, [
     ValuesAnimationType? animation,
@@ -87,13 +87,13 @@ class ThemeJsonScope extends StatefulWidget {
           model.lastPointerDown ?? themeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeTheme(themeId: id, origin: origin, animation: animation),
+        model.changeAppTheme(themeId: id, origin: origin, animation: animation),
       );
       return;
     }
 
     final inheritedWidget = ThemeJsonManager.of(context);
-    inheritedWidget?.changeTheme(id);
+    inheritedWidget?.changeAppTheme(id);
   }
 
   /// Returns the currently active theme map.
@@ -165,7 +165,7 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
       wrapThemedChild: (theme, child) => ThemeJsonManager(
         themes: widget.themes,
         currentTheme: theme as Map<String, dynamic>,
-        changeTheme: _changeTheme,
+        changeAppTheme: _changeTheme,
         child: child,
       ),
     );
@@ -188,7 +188,7 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
         _animationModel.lastPointerDown ??
         themeAnimationOrigin(context, _animationModel);
     _animationModel.lastPointerDown = null;
-    unawaited(_animationModel.changeTheme(themeId: id, origin: origin));
+    unawaited(_animationModel.changeAppTheme(themeId: id, origin: origin));
   }
 
   /// Updates the active theme by its ID.
@@ -222,7 +222,7 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
           child: ThemeJsonManager(
             themes: widget.themes,
             currentTheme: _currentTheme,
-            changeTheme: _changeTheme,
+            changeAppTheme: _changeTheme,
             child: widget.useThemeSwitchingArea
                 ? ThemeSwitchingArea(child: widget.child)
                 : widget.child,

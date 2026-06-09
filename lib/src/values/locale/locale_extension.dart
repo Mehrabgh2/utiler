@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/utiler_scope.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_json_manager.dart';
@@ -63,9 +64,9 @@ extension LocaleExtension on BuildContext {
   /// ```
   void changeAppLocale(String id, [ValuesAnimationType? animation]) {
     if (ValuesScope.isJsonLocale) {
-      LocaleJsonScope.changeLocale(this, id, animation);
+      LocaleJsonScope.changeAppLocale(this, id, animation);
     } else {
-      LocaleScope.changeLocale(this, id, animation);
+      LocaleScope.changeAppLocale(this, id, animation);
     }
   }
 
@@ -109,11 +110,11 @@ extension LocaleStringExtension on String {
   /// If no localization context is available or the key is missing,
   /// returns the original string.
   String get tr {
-    if (UtilerScope.localeContext == null) {
+    if (Utiler.localeContext == null) {
       return this;
     }
 
-    final inheritedWidget = LocaleJsonManager.of(UtilerScope.localeContext!);
+    final inheritedWidget = LocaleJsonManager.of(Utiler.localeContext!);
 
     if (inheritedWidget == null) return this;
 

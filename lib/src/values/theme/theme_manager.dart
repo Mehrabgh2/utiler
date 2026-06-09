@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/values/theme/theme_values.dart';
 
 /// A generic [InheritedWidget] that provides strongly typed theme data
@@ -18,7 +18,7 @@ import 'package:utiler/src/values/theme/theme_values.dart';
 /// ThemeManager<AppTheme>(
 ///   themes: themes,
 ///   currentTheme: themes.first,
-///   changeTheme: (id) {},
+///   changeAppTheme: (id) {},
 ///   child: MyApp(),
 /// )
 /// ```
@@ -29,7 +29,7 @@ class ThemeManager<T extends ThemeValues> extends InheritedWidget {
     required super.child,
     required this.themes,
     required this.currentTheme,
-    required this.changeTheme,
+    required this.changeAppTheme,
   });
 
   /// All available typed themes.
@@ -39,21 +39,21 @@ class ThemeManager<T extends ThemeValues> extends InheritedWidget {
   final T currentTheme;
 
   /// Callback used to change theme by identifier.
-  final Function(String) changeTheme;
+  final Function(String) changeAppTheme;
 
   /// Retrieves the nearest [ThemeManager] of type [T].
   static ThemeManager<T>? of<T extends ThemeValues>(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ThemeManager<T>>();
   }
 
-  /// Wraps the child widget and updates [UtilerScope.themeContext].
+  /// Wraps the child widget and updates [Utiler.themeContext].
   ///
   /// This allows global access to the current theme context.
   @override
   Widget get child {
     return Builder(
       builder: (context) {
-        UtilerScope.themeContext = context;
+        Utiler.themeContext = context;
         return super.child;
       },
     );

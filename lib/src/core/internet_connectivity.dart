@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:utiler/src/core/internet_lookup_web.dart'
+    if (dart.library.io) 'package:utiler/src/core/internet_lookup_io.dart';
 
 /// Represents the current interpreted internet state of the device.
 ///
@@ -77,8 +78,7 @@ class InternetConnectivity {
   /// [address] defaults to `google.com`.
   static Future<bool> hasInternetAccess([String address = 'google.com']) async {
     try {
-      final result = await InternetAddress.lookup(address);
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      return await lookupHost(address);
     } catch (_) {
       return false;
     }

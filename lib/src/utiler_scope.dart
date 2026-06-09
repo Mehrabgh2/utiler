@@ -1,154 +1,151 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
+import 'package:utiler/src/core/app_config.dart';
+import 'package:utiler/src/core/internet_connectivity.dart';
 import 'package:utiler/src/core/lifecycle_handler.dart';
 import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
 import 'package:utiler/src/logger/logger.dart';
 import 'package:utiler/src/logger/logger_console.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
-import 'package:utiler/src/values/locale/locale_extension.dart';
 import 'package:utiler/src/values/locale/locale_values.dart';
-import 'package:utiler/src/values/theme/theme_extension.dart';
 import 'package:utiler/src/values/theme/theme_values.dart';
 import 'package:utiler/src/values/values_runtime.dart';
 import 'package:utiler/src/values/values_scope.dart';
 
 /// The root configuration widget for the Utiler utility package.
 ///
-/// `UtilerScope` is responsible for initializing and wiring together
-/// all core utilities provided by the package, including:
-///
-/// - 🔄 App lifecycle tracking (`LifecycleHandler`)
-/// - 🪵 Logging system (`Logger`, `LoggerConsole`)
-/// - 🌍 Localization system (JSON-based or typed `LocaleScope`)
-/// - 🎨 Theme system (JSON-based or typed `ThemeScope`)
-/// - 💾 Secure persistence for theme & locale selection
-///
-/// It acts as a single entry point that wraps your entire app
-/// and conditionally builds feature systems based on provided configuration.
+/// Place `UtilerScope` above your `MaterialApp` (or equivalent) to wire up
+/// all Utiler subsystems at startup. Once mounted, every subsystem is
+/// accessible through the [Utiler] static API.
 ///
 /// ---
 ///
-/// ### Features
+/// ## Subsystems
 ///
-/// #### Logging
-/// - Enable/disable logs via `enabledLog`
-/// - Export logs to file via `exportLog`
-/// - Show in-app log console via `showLogWidget`
-///
-/// #### Localization
-/// Supports two modes:
-/// - Typed localization (`LocaleValues`)
-/// - JSON-based localization (`Map<String, dynamic>`)
-///
-/// You can also load JSON assets directly using `jsonLocalesAddress`.
-///
-/// ---
-///
-/// #### JSON helpers (`.cr` and `.tr`)
-///
-/// **Recursive JSON value access (color / nested maps)** via `.cr`:
-///
-/// ```dart
-/// // JSON (example)
-/// {
-///   'light': {
-///     'home': {'background': 'FF1565C0'},
-///     'profile': {'background': 'FF1565C0'},
-///   },
-/// }
-///
-/// // Usage
-/// 'home.background'.cr
-/// ```
-///
-/// **Localized string access** via `.tr` (dot notation):
-///
-/// ```dart
-/// // JSON (example)
-/// {
-///   'en': {
-///     'home': {'appbar': 'Home Screen'},
-///     'profile': {'appbar': 'Profile Screen'},
-///   },
-/// }
-///
-/// // Usage
-/// 'home.appbar'.tr
-/// ```
-///
-/// #### Theming
-/// Supports two modes:
-/// - Typed theme system (`ThemeValues`)
-/// - JSON-based theme system (`Map<String, dynamic>`)
-///
-/// You can also load JSON assets directly using `jsonThemesAddress`.
-///
-/// Theme and Locale switching is animated automatically when using
-/// (`BuildContext.changeAppTheme`) or (`UtilerScope.changeAppTheme`).
-///
-/// #### Animation defaults
-///
-/// Set default transition styles via [themeAnimation] and [localeAnimation].
-/// Durations are controlled by [themeAnimationDuration] and
-/// [localeAnimationDuration]. User preferences are persisted and can be
-/// updated at runtime with [changeThemeAnimation] and
-/// [changeLocaleAnimation].
-///
-/// @example
-/// ```dart
-/// UtilerScope(
-///   themeAnimation: ValuesAnimationType.fade,
-///   themeAnimationDuration: Duration(milliseconds: 300),
-///   localeAnimation: ValuesAnimationType.scale,
-///   localeAnimationDuration: Duration(milliseconds: 400),
-///   child: MyApp(),
-/// );
-/// ```
-///
-/// #### Persistence
-/// Automatically saves:
-/// - Selected theme
-/// - Selected locale
-///
-/// using secure storage via `Database`
-///
-/// ---
-///
-/// ### Usage
+/// ### Logging
 ///
 /// ```dart
 /// UtilerScope(
 ///   enabledLog: true,
 ///   exportLog: false,
 ///   showLogWidget: false,
-///   themes: AppThemes.themes,
-///   locales: AppLocales.locales,
 ///   child: MyApp(),
 /// );
 /// ```
 ///
-/// or JSON-based:
+/// ### Theming
+///
+/// Supports typed ([ThemeValues]) or JSON-based themes. JSON files can be
+/// passed directly via [jsonThemes] or loaded from assets via
+/// [jsonThemesAddress].
+///
+/// Theme switching is animated when called via [Utiler.changeAppTheme].
+/// The default transition style is set with [themeAnimation] and its duration
+/// with [themeAnimationDuration]. Both are persisted across sessions.
+///
+/// **JSON helper — `.cr` (recursive color/map access):**
+///
+/// ```dart
+/// // JSON
+/// { 'light': { 'home': { 'background': 'FF1565C0' } } }
+///
+/// // Usage
+/// 'home.background'.cr
+/// ```
+///
+/// ### Localization
+///
+/// Supports typed ([LocaleValues]) or JSON-based locales. JSON files can be
+/// passed directly via [jsonLocales] or loaded from assets via
+/// [jsonLocalesAddress].
+///
+/// Locale switching is animated when called via [Utiler.changeAppLocale].
+/// The default transition style is set with [localeAnimation] and its duration
+/// with [localeAnimationDuration]. Both are persisted across sessions.
+///
+/// **JSON helper — `.tr` (dot-notation string lookup):**
+///
+/// ```dart
+/// // JSON
+/// { 'en': { 'home': { 'appbar': 'Home Screen' } } }
+///
+/// // Usage
+/// 'home.appbar'.tr
+/// ```
+///
+/// ### Feature Flags
 ///
 /// ```dart
 /// UtilerScope(
-///   jsonThemesAddress: ['assets/themes/dark.json'],
-///   jsonLocalesAddress: ['assets/locales/en.json'],
+///   featureFlags: {
+///     'new_checkout': true,
+///     'beta_chat': false,
+///   },
 ///   child: MyApp(),
 /// );
+///
+/// // Anywhere in the app:
+/// if (Utiler.flags.isEnabled('new_checkout')) { ... }
 /// ```
+///
+/// ### Internet Connectivity
+///
+/// ```dart
+/// UtilerScope(
+///   onConnectivityChange: (status) {
+///     if (status == InternetStatus.disconnected) showOfflineBanner();
+///   },
+///   child: MyApp(),
+/// );
+///
+/// // One-time check:
+/// final hasInternet = await InternetConnectivity.hasInternetAccess();
+/// ```
+///
+/// ### App Configuration
+///
+/// ```dart
+/// UtilerScope(
+///   appConfig: AppConfigStore(
+///     active: AppEnvironment.production,
+///     configs: {
+///       AppEnvironment.development: AppConfig.fromMap(
+///         environment: AppEnvironment.development,
+///         data: {'api_base_url': 'http://localhost:8080'},
+///       ),
+///       AppEnvironment.production: AppConfig.fromMap(
+///         environment: AppEnvironment.production,
+///         data: {'api_base_url': 'https://api.example.com'},
+///       ),
+///     },
+///   ),
+///   child: MyApp(),
+/// );
+///
+/// // Anywhere in the app:
+/// final url = Utiler.config.active.require<String>('api_base_url');
+/// ```
+///
+/// ### Persistence
+///
+/// Selected theme, locale, and their animation preferences are automatically
+/// persisted to secure storage and restored on the next launch.
 ///
 /// ---
 ///
-/// ### Notes
+/// ## Notes
 ///
-/// - Only one of `themes` or `jsonThemes` should be used.
-/// - Only one of `locales` or `jsonLocales` should be used.
-/// - Mixing typed and JSON modes will throw an error.
-/// - This widget must be placed above `MaterialApp` or equivalent.
+/// - Use either [themes] **or** [jsonThemes] / [jsonThemesAddress], not both.
+/// - Use either [locales] **or** [jsonLocales] / [jsonLocalesAddress], not both.
+/// - Mixing typed and JSON modes for the same subsystem will throw an error.
+/// - All runtime APIs ([Utiler.changeAppTheme], [Utiler.flags], etc.) are only
+///   available after this widget is mounted.
 ///
 class UtilerScope extends StatefulWidget {
   /// Creates a [UtilerScope].
@@ -157,6 +154,7 @@ class UtilerScope extends StatefulWidget {
     this.lifecycleListener,
     this.enabledLog = true,
     this.exportLog = false,
+    this.logExportDirectory,
     this.showLogWidget = false,
     this.themes,
     this.jsonThemes,
@@ -168,6 +166,9 @@ class UtilerScope extends StatefulWidget {
     this.themeAnimationDuration = const Duration(milliseconds: 500),
     this.localeAnimation,
     this.localeAnimationDuration = const Duration(milliseconds: 500),
+    this.featureFlags,
+    this.onConnectivityChange,
+    this.appConfig,
     super.key,
   });
 
@@ -180,130 +181,107 @@ class UtilerScope extends StatefulWidget {
   /// Enables or disables logging globally.
   final bool enabledLog;
 
-  /// Whether logs should be exported to file.
+  /// Whether logs should be exported to a file.
   final bool exportLog;
 
-  /// Whether to show an in-app log console widget.
+  /// Directory for log export when [exportLog] is `true`.
+  ///
+  /// Provide an absolute path (e.g. from `path_provider`).
+  /// Ignored on web where file export is unavailable.
+  final String? logExportDirectory;
+
+  /// Whether to show an in-app log console overlay.
   final bool showLogWidget;
 
-  /// Typed theme definitions.
+  /// Typed theme definitions. Mutually exclusive with [jsonThemes] and
+  /// [jsonThemesAddress].
   final List<ThemeValues>? themes;
 
-  /// JSON-based theme definitions.
+  /// JSON-based theme definitions. Mutually exclusive with [themes].
   final List<Map<String, dynamic>>? jsonThemes;
 
-  /// Asset paths for JSON theme files.
+  /// Asset paths for JSON theme files. Loaded and merged at startup.
+  /// Mutually exclusive with [themes].
   final List<String>? jsonThemesAddress;
 
-  /// Typed locale definitions.
+  /// Typed locale definitions. Mutually exclusive with [jsonLocales] and
+  /// [jsonLocalesAddress].
   final List<LocaleValues>? locales;
 
-  /// JSON-based locale definitions.
+  /// JSON-based locale definitions. Mutually exclusive with [locales].
   final List<Map<String, dynamic>>? jsonLocales;
 
-  /// Asset paths for JSON locale files.
+  /// Asset paths for JSON locale files. Loaded and merged at startup.
+  /// Mutually exclusive with [locales].
   final List<String>? jsonLocalesAddress;
 
-  /// Default theme transition applied when [changeAppTheme] is called without
-  /// an explicit animation. `null` means instant unless overridden per call.
+  /// Default theme transition applied when [Utiler.changeAppTheme] is called
+  /// without an explicit animation argument. `null` means instant.
+  ///
+  /// The value is persisted and restored across sessions. It can be updated
+  /// at runtime via [Utiler.changeThemeAnimation].
   final ValuesAnimationType? themeAnimation;
 
   /// Duration of animated theme reveal transitions.
   final Duration themeAnimationDuration;
 
-  /// Default locale transition applied when [changeAppLocale] is called without
-  /// an explicit animation. `null` means instant unless overridden per call.
+  /// Default locale transition applied when [Utiler.changeAppLocale] is called
+  /// without an explicit animation argument. `null` means instant.
+  ///
+  /// The value is persisted and restored across sessions. It can be updated
+  /// at runtime via [Utiler.changeLocaleAnimation].
   final ValuesAnimationType? localeAnimation;
 
   /// Duration of animated locale reveal transitions.
   final Duration localeAnimationDuration;
 
-  static Future<void> Function(ValuesAnimationType?)? _persistThemeAnimation;
-  static Future<void> Function(ValuesAnimationType?)? _persistLocaleAnimation;
-
-  /// Global context used by theme extensions.
-  static BuildContext? themeContext;
-
-  /// Global context used by locale extensions.
-  static BuildContext? localeContext;
-
-  /// Changes the global theme at runtime.
+  /// Initial feature-flag definitions.
   ///
-  /// Animation priority: [animation] → [themeAnimation] → instant.
+  /// Missing keys resolve to `false` when queried via [Utiler.flags].
   ///
-  /// @example
   /// ```dart
-  /// // Uses the default from UtilerScope.themeAnimation
-  /// UtilerScope.changeAppTheme('dark');
-  ///
-  /// // Overrides with a one-off animation
-  /// UtilerScope.changeAppTheme('light', ValuesAnimationType.fade);
+  /// UtilerScope(
+  ///   featureFlags: {
+  ///     'new_checkout': true,
+  ///     'dark_mode_v2': false,
+  ///   },
+  ///   child: MyApp(),
+  /// );
   /// ```
-  static void changeAppTheme(
-    String newTheme, [
-    ValuesAnimationType? animation,
-  ]) {
-    themeContext?.changeAppTheme(newTheme, animation);
-  }
+  final Map<String, bool>? featureFlags;
 
-  /// Changes the global locale at runtime.
+  /// Callback invoked whenever [InternetStatus] changes.
   ///
-  /// Animation priority: [animation] → [localeAnimation] → instant.
+  /// Connectivity monitoring is activated automatically when this callback
+  /// is provided.
   ///
-  /// @example
   /// ```dart
-  /// // Uses the default from UtilerScope.localeAnimation
-  /// UtilerScope.changeAppLocale('en');
-  ///
-  /// // Overrides with a one-off animation
-  /// UtilerScope.changeAppLocale('fa', ValuesAnimationType.scale);
+  /// UtilerScope(
+  ///   onConnectivityChange: (status) {
+  ///     if (status == InternetStatus.disconnected) showOfflineBanner();
+  ///   },
+  ///   child: MyApp(),
+  /// );
   /// ```
-  static void changeAppLocale(
-    String newLocale, [
-    ValuesAnimationType? animation,
-  ]) {
-    localeContext?.changeAppLocale(newLocale, animation);
-  }
+  final void Function(InternetStatus status)? onConnectivityChange;
 
-  /// Updates the default theme transition style and persists the preference.
+  /// Environment-aware application configuration store.
   ///
-  /// Pass `null` to clear the default and use instant transitions.
+  /// Made available globally via [Utiler.config] once mounted.
   ///
-  /// @example
   /// ```dart
-  /// await UtilerScope.changeThemeAnimation(ValuesAnimationType.fade);
-  /// await UtilerScope.changeThemeAnimation(null); // instant
-  /// ```
-  static Future<void> changeThemeAnimation(
-    ValuesAnimationType? animation,
-  ) async {
-    ValuesRuntime.themeAnimation = animation;
-    await _persistThemeAnimation?.call(animation);
-  }
-
-  /// Updates the default locale transition style and persists the preference.
+  /// UtilerScope(
+  ///   appConfig: AppConfigStore(
+  ///     active: AppEnvironment.production,
+  ///     configs: { ... },
+  ///   ),
+  ///   child: MyApp(),
+  /// );
   ///
-  /// Pass `null` to clear the default and use instant transitions.
-  ///
-  /// @example
-  /// ```dart
-  /// await UtilerScope.changeLocaleAnimation(ValuesAnimationType.scale);
-  /// await UtilerScope.changeLocaleAnimation(null); // instant
+  /// // Anywhere in the app:
+  /// final url = Utiler.config.active.require<String>('api_base_url');
   /// ```
-  static Future<void> changeLocaleAnimation(
-    ValuesAnimationType? animation,
-  ) async {
-    ValuesRuntime.localeAnimation = animation;
-    await _persistLocaleAnimation?.call(animation);
-  }
-
-  /// Returns the active default theme transition style.
-  static ValuesAnimationType? get themeAnimationType =>
-      ValuesRuntime.themeAnimation;
-
-  /// Returns the active default locale transition style.
-  static ValuesAnimationType? get localeAnimationType =>
-      ValuesRuntime.localeAnimation;
+  final AppConfigStore? appConfig;
 
   @override
   State<UtilerScope> createState() => _UtilerScopeState();
@@ -311,13 +289,18 @@ class UtilerScope extends StatefulWidget {
 
 class _UtilerScopeState extends State<UtilerScope> {
   late final Future<Widget> _initializedChild;
+  StreamSubscription<InternetStatus>? _connectivitySubscription;
+
+  final Database _database = Database();
 
   @override
   void initState() {
     super.initState();
     _initLogging();
-    UtilerScope._persistThemeAnimation = _persistThemeAnimation;
-    UtilerScope._persistLocaleAnimation = _persistLocaleAnimation;
+    _initFeatureFlags();
+    _initAppConfig();
+    _initConnectivity();
+    _wireUtilerCallbacks();
     ValuesRuntime.themeAnimation = widget.themeAnimation;
     ValuesRuntime.localeAnimation = widget.localeAnimation;
     _initializedChild = _buildChild();
@@ -325,34 +308,63 @@ class _UtilerScopeState extends State<UtilerScope> {
 
   @override
   void dispose() {
-    UtilerScope._persistThemeAnimation = null;
-    UtilerScope._persistLocaleAnimation = null;
+    Utiler.persistThemeAnimation = null;
+    Utiler.persistLocaleAnimation = null;
+    if (widget.onConnectivityChange != null) {
+      unawaited(_connectivitySubscription?.cancel());
+      unawaited(InternetConnectivity.dispose());
+    }
     super.dispose();
   }
+
+  // ── init helpers ────────────────────────────────────────────────────────────
 
   void _initLogging() {
     Logger.enabled = widget.enabledLog;
     Logger.export = widget.exportLog;
+    Logger.exportDirectory = widget.logExportDirectory;
     Logger.showWidget = widget.showLogWidget;
   }
 
-  /// Internal database instance for persistence.
-  final Database _database = Database();
+  void _initFeatureFlags() {
+    if (widget.featureFlags != null) {
+      Utiler.setFlags(widget.featureFlags!);
+    }
+  }
+
+  void _initAppConfig() {
+    if (widget.appConfig != null) {
+      Utiler.setConfig(widget.appConfig!);
+    }
+  }
+
+  void _initConnectivity() {
+    if (widget.onConnectivityChange == null) return;
+    _connectivitySubscription = InternetConnectivity.onStatusChange
+        .asBroadcastStream()
+        .listen((status) => widget.onConnectivityChange?.call(status));
+  }
+
+  /// Wires persistence callbacks and context references into [Utiler].
+  void _wireUtilerCallbacks() {
+    Utiler.persistThemeAnimation = _persistThemeAnimation;
+    Utiler.persistLocaleAnimation = _persistLocaleAnimation;
+  }
+
+  // ── build ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
       future: _initializedChild,
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data!;
-        }
+        if (snapshot.hasData) return snapshot.data!;
         return const SizedBox();
       },
     );
   }
 
-  /// Builds the final widget tree after async initialization.
+  /// Builds the final widget tree after async initialization completes.
   Future<Widget> _buildChild() async {
     Widget finalChild = widget.child;
 
@@ -367,26 +379,25 @@ class _UtilerScopeState extends State<UtilerScope> {
       finalChild = LoggerConsole(child: finalChild);
     }
 
-    if (widget.locales == null &&
-        widget.jsonLocales == null &&
-        widget.themes == null &&
-        widget.jsonThemes == null &&
-        widget.jsonLocalesAddress == null &&
-        widget.jsonThemesAddress == null) {
-      return finalChild;
-    }
+    final hasThemes =
+        widget.themes != null ||
+        widget.jsonThemes != null ||
+        widget.jsonThemesAddress != null;
+
+    final hasLocales =
+        widget.locales != null ||
+        widget.jsonLocales != null ||
+        widget.jsonLocalesAddress != null;
+
+    if (!hasThemes && !hasLocales) return finalChild;
 
     final savedTheme = await _getSavedTheme();
     final savedLocale = await _getSavedLocale();
     final savedThemeAnimation = await _getSavedThemeAnimation();
     final savedLocaleAnimation = await _getSavedLocaleAnimation();
 
-    if (savedTheme != null) {
-      ValuesRuntime.currentThemeId = savedTheme;
-    }
-    if (savedLocale != null) {
-      ValuesRuntime.currentLocaleId = savedLocale;
-    }
+    if (savedTheme != null) ValuesRuntime.currentThemeId = savedTheme;
+    if (savedLocale != null) ValuesRuntime.currentLocaleId = savedLocale;
     if (savedThemeAnimation != null) {
       ValuesRuntime.themeAnimation = savedThemeAnimation;
     }
@@ -394,76 +405,62 @@ class _UtilerScopeState extends State<UtilerScope> {
       ValuesRuntime.localeAnimation = savedLocaleAnimation;
     }
 
-    finalChild = ValuesScope(
+    return ValuesScope(
       locales: widget.locales,
       themes: widget.themes,
-      jsonLocales:
-          widget.jsonLocalesAddress != null &&
-              widget.jsonLocalesAddress!.isNotEmpty
+      jsonLocales: hasLocales && widget.jsonLocalesAddress != null
           ? await Future.wait<Map<String, dynamic>>(
-              widget.jsonLocalesAddress!.map(_readAssets),
+              widget.jsonLocalesAddress!.map(_readAsset),
             )
           : widget.jsonLocales,
-      jsonThemes:
-          widget.jsonThemesAddress != null &&
-              widget.jsonThemesAddress!.isNotEmpty
+      jsonThemes: hasThemes && widget.jsonThemesAddress != null
           ? await Future.wait<Map<String, dynamic>>(
-              widget.jsonThemesAddress!.map(_readAssets),
+              widget.jsonThemesAddress!.map(_readAsset),
             )
           : widget.jsonThemes,
       initialLocale: savedLocale,
       initialTheme: savedTheme,
-      themeChanged: _themeChanged,
-      localeChanged: _localeChanged,
+      themeChanged: _onThemeChanged,
+      localeChanged: _onLocaleChanged,
       themeAnimation: ValuesRuntime.themeAnimation,
       themeAnimationDuration: widget.themeAnimationDuration,
       localeAnimation: ValuesRuntime.localeAnimation,
       localeAnimationDuration: widget.localeAnimationDuration,
       child: finalChild,
     );
-
-    return finalChild;
   }
 
-  /// Persists theme selection to secure storage.
-  Future<void> _themeChanged(String newTheme) async {
+  // ── persistence ─────────────────────────────────────────────────────────────
+
+  Future<void> _onThemeChanged(String newTheme) async {
     ValuesRuntime.currentThemeId = newTheme;
     await _database.putSecure(
       SecureDatabaseData(key: 'theme', value: newTheme),
     );
   }
 
-  /// Persists locale selection to secure storage.
-  Future<void> _localeChanged(String newLocale) async {
+  Future<void> _onLocaleChanged(String newLocale) async {
     ValuesRuntime.currentLocaleId = newLocale;
     await _database.putSecure(
       SecureDatabaseData(key: 'locale', value: newLocale),
     );
   }
 
-  /// Retrieves the last saved theme.
-  Future<String?> _getSavedTheme() async {
-    return (await _database.getSecure('theme'))?.value;
-  }
+  Future<String?> _getSavedTheme() async =>
+      (await _database.getSecure('theme'))?.value;
 
-  /// Retrieves the last saved locale.
-  Future<String?> _getSavedLocale() async {
-    return (await _database.getSecure('locale'))?.value;
-  }
+  Future<String?> _getSavedLocale() async =>
+      (await _database.getSecure('locale'))?.value;
 
   Future<ValuesAnimationType?> _getSavedThemeAnimation() async {
     final value = (await _database.getSecure('theme_animation'))?.value;
-    if (value == null) {
-      return null;
-    }
+    if (value == null) return null;
     return ValuesAnimationTypeX.parse(value, fallback: widget.themeAnimation);
   }
 
   Future<ValuesAnimationType?> _getSavedLocaleAnimation() async {
     final value = (await _database.getSecure('locale_animation'))?.value;
-    if (value == null) {
-      return null;
-    }
+    if (value == null) return null;
     return ValuesAnimationTypeX.parse(value, fallback: widget.localeAnimation);
   }
 
@@ -489,8 +486,10 @@ class _UtilerScopeState extends State<UtilerScope> {
     );
   }
 
-  /// Reads and parses a JSON asset file into a map.
-  Future<Map<String, dynamic>> _readAssets(String address) async {
+  // ── assets ──────────────────────────────────────────────────────────────────
+
+  /// Reads a JSON asset file and returns it keyed by its filename (no ext).
+  Future<Map<String, dynamic>> _readAsset(String address) async {
     final file = json.decode(await rootBundle.loadString(address));
     return {p.basenameWithoutExtension(address): file};
   }

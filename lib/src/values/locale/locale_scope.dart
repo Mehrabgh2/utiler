@@ -72,9 +72,9 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
   ///
   /// Example:
   /// ```dart
-  /// LocaleScope.changeLocale(context, 'fa', ValuesAnimationType.fade);
+  /// LocaleScope.changeAppLocale(context, 'fa', ValuesAnimationType.fade);
   /// ```
-  static void changeLocale(
+  static void changeAppLocale(
     BuildContext context,
     String id, [
     ValuesAnimationType? animation,
@@ -85,13 +85,17 @@ class LocaleScope<T extends LocaleValues> extends StatefulWidget {
           model.lastPointerDown ?? localeAnimationOrigin(context, model);
       model.lastPointerDown = null;
       unawaited(
-        model.changeLocale(localeId: id, origin: origin, animation: animation),
+        model.changeAppLocale(
+          localeId: id,
+          origin: origin,
+          animation: animation,
+        ),
       );
       return;
     }
 
     final inheritedWidget = LocaleManager.of(context);
-    inheritedWidget?.changeLocale(id);
+    inheritedWidget?.changeAppLocale(id);
   }
 
   /// Returns the currently active locale (typed as [LocaleValues]).
@@ -161,7 +165,7 @@ class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>>
       wrapLocaledChild: (locale, child) => LocaleManager<LocaleValues>(
         locales: widget.locales,
         currentLocale: locale as LocaleValues,
-        changeLocale: _changeLocale,
+        changeAppLocale: _changeLocale,
         child: child,
       ),
     );
@@ -184,7 +188,7 @@ class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>>
         _animationModel.lastPointerDown ??
         localeAnimationOrigin(context, _animationModel);
     _animationModel.lastPointerDown = null;
-    unawaited(_animationModel.changeLocale(localeId: id, origin: origin));
+    unawaited(_animationModel.changeAppLocale(localeId: id, origin: origin));
   }
 
   /// Updates the active locale by its ID.
@@ -216,7 +220,7 @@ class _LocaleScope<T extends LocaleValues> extends State<LocaleScope<T>>
           child: LocaleManager<LocaleValues>(
             locales: widget.locales,
             currentLocale: _currentLocale,
-            changeLocale: _changeLocale,
+            changeAppLocale: _changeLocale,
             child: widget.useLocaleSwitchingArea
                 ? LocaleSwitchingArea(child: widget.child)
                 : widget.child,

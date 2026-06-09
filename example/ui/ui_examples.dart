@@ -13,7 +13,7 @@ class _UiExamplesState extends State<UiExamples> {
 
   @override
   Widget build(BuildContext context) {
-    return ColorfulSafearea(
+    return ColorfulSafeArea(
       color: Colors.white,
       maintainBottomViewPadding: true,
       child: Scaffold(

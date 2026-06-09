@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:utiler/src/utiler_scope.dart';
+import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/values/locale/locale_values.dart';
 
 /// A generic [InheritedWidget] that provides strongly typed localization
@@ -18,7 +18,7 @@ import 'package:utiler/src/values/locale/locale_values.dart';
 /// LocaleManager<AppLocale>(
 ///   locales: locales,
 ///   currentLocale: locales.first,
-///   changeLocale: (id) {},
+///   changeAppLocale: (id) {},
 ///   child: MyApp(),
 /// )
 /// ```
@@ -29,7 +29,7 @@ class LocaleManager<T extends LocaleValues> extends InheritedWidget {
     required super.child,
     required this.locales,
     required this.currentLocale,
-    required this.changeLocale,
+    required this.changeAppLocale,
   });
 
   /// All available typed locale values.
@@ -39,21 +39,21 @@ class LocaleManager<T extends LocaleValues> extends InheritedWidget {
   final T currentLocale;
 
   /// Callback used to change the active locale by its identifier.
-  final Function(String) changeLocale;
+  final Function(String) changeAppLocale;
 
   /// Retrieves the nearest [LocaleManager] of type [T] from the widget tree.
   static LocaleManager<T>? of<T extends LocaleValues>(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<LocaleManager<T>>();
   }
 
-  /// Wraps the inherited child to update [UtilerScope.localeContext].
+  /// Wraps the inherited child to update [Utiler.localeContext].
   ///
   /// This allows global access to the current localization context.
   @override
   Widget get child {
     return Builder(
       builder: (context) {
-        UtilerScope.localeContext = context;
+        Utiler.localeContext = context;
         return super.child;
       },
     );

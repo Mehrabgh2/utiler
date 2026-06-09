@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Built-in transition styles for theme and locale switching.
 ///
-/// Pass a [ValuesAnimationType] to [ThemeScope.changeTheme],
-/// [LocaleScope.changeLocale], or the `animation` parameters on
+/// Pass a [ValuesAnimationType] to [ThemeScope.changeAppTheme],
+/// [LocaleScope.changeAppLocale], or the `animation` parameters on
 /// [ValuesScope], [UtilerScope], and [BuildContext] extension methods.
 ///
 /// Animation resolution priority (theme and locale):

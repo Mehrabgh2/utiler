@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:utiler/src/service/api_file_stub.dart'
+    if (dart.library.io) 'package:utiler/src/service/api_file_io.dart';
 import 'package:utiler/utiler.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -379,8 +380,7 @@ class ApiService<E extends ApiError> {
       }
 
       /// Attach the file from disk as a multipart file.
-      request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
-
+      request.files.add(await multipartFileFromPath(fileField, filePath));
       final streamed = await request.send().timeout(_timeout);
       final response = await http.Response.fromStream(streamed);
 
@@ -451,24 +451,13 @@ class ApiService<E extends ApiError> {
 
       /// Stream response bytes directly to disk to avoid loading
       /// the entire file into memory — safe for large files.
-      final file = File(savePath);
-      final sink = file.openWrite();
-
       final totalBytes = streamed.contentLength ?? 0;
-      var receivedBytes = 0;
-
-      await for (final chunk in streamed.stream) {
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-
-        /// Report progress only when total size is known and callback is provided.
-        if (onProgress != null && totalBytes > 0) {
-          onProgress(receivedBytes / totalBytes);
-        }
-      }
-
-      await sink.flush();
-      await sink.close();
+      await writeResponseStreamToFile(
+        savePath,
+        streamed.stream,
+        onProgress: onProgress,
+        totalBytes: totalBytes,
+      );
 
       return ApiResponse<String?, E>(
         statusCode: streamed.statusCode,

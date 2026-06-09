@@ -14,7 +14,10 @@ import 'package:utiler/src/database/secure_database_data.dart';
 /// Example:
 /// ```dart
 /// final db = Database();
-/// await db.init(true);
+/// await db.init(
+///   logging: true,
+///   jsonStoragePath: '/path/from/your/app',
+/// );
 ///
 /// await db.putJson(JsonDatabaseData(
 ///   key: 'settings',
@@ -47,13 +50,18 @@ class Database {
   /// Internal secure database instance.
   static final SecureDatabase _secureDb = SecureDatabase();
 
-  /// Initializes both JSON and secure databases.
+  /// Initializes secure storage and optionally the JSON database.
   ///
-  /// If [logging] is true, internal operations of both databases will log
-  /// their status and errors.
-  Future<void> init([bool logging = false]) async {
+  /// [jsonStoragePath] is required when using JSON operations:
+  /// - mobile/desktop: absolute directory from your app
+  /// - web: logical Hive prefix (e.g. `'utiler_hive'`)
+  ///
+  /// If [logging] is true, internal operations log their status and errors.
+  Future<void> init({bool logging = false, String? jsonStoragePath}) async {
     await _secureDb.init(logging);
-    await _jsonDb.init(logging);
+    if (jsonStoragePath != null) {
+      await _jsonDb.init(storagePath: jsonStoragePath, logging: logging);
+    }
   }
 
   // ---------------------------------------------------------------------------

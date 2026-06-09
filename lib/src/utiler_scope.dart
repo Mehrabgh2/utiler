@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
+import 'package:utiler/src/core/app_config.dart';
+import 'package:utiler/src/core/feature_flags.dart';
+import 'package:utiler/src/core/internet_connectivity.dart';
 import 'package:utiler/src/core/lifecycle_handler.dart';
 import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
@@ -25,6 +29,9 @@ import 'package:utiler/src/values/values_scope.dart';
 /// - 🪵 Logging system (`Logger`, `LoggerConsole`)
 /// - 🌍 Localization system (JSON-based or typed `LocaleScope`)
 /// - 🎨 Theme system (JSON-based or typed `ThemeScope`)
+/// - 🚩 Feature flags (`FeatureFlags`)
+/// - 🌐 Internet connectivity monitoring (`InternetConnectivity`)
+/// - ⚙️ Environment-aware app configuration (`AppConfigStore`)
 /// - 💾 Secure persistence for theme & locale selection
 ///
 /// It acts as a single entry point that wraps your entire app
@@ -109,6 +116,81 @@ import 'package:utiler/src/values/values_scope.dart';
 /// );
 /// ```
 ///
+/// #### Feature Flags
+///
+/// Register boolean feature flags at startup and query them anywhere in the
+/// app via [UtilerScope.flags]. Missing keys resolve to `false`.
+///
+/// @example
+/// ```dart
+/// UtilerScope(
+///   featureFlags: {
+///     'new_checkout': true,
+///     'beta_chat': false,
+///   },
+///   child: MyApp(),
+/// );
+///
+/// // Later, anywhere in the app:
+/// if (UtilerScope.flags.isEnabled('new_checkout')) {
+///   // show new checkout flow
+/// }
+/// ```
+///
+/// #### Internet Connectivity
+///
+/// Monitor network status changes reactively or check it on demand.
+/// Set [monitorConnectivity] to `true` to activate monitoring and receive
+/// status updates via [onConnectivityChange]. Use [onConnectivityChange] to
+/// react to [InternetStatus] updates (connected, vpn, disconnected).
+///
+/// @example
+/// ```dart
+/// UtilerScope(
+///   monitorConnectivity: true,
+///   onConnectivityChange: (status) {
+///     if (status == InternetStatus.disconnected) {
+///       showOfflineBanner();
+///     }
+///   },
+///   child: MyApp(),
+/// );
+///
+/// // One-time check anywhere in the app:
+/// final status = await InternetConnectivity.currentStatus;
+/// final hasInternet = await InternetConnectivity.hasInternetAccess();
+/// ```
+///
+/// #### App Configuration
+///
+/// Provide an [AppConfigStore] at startup to make environment-specific
+/// settings available globally via [UtilerScope.config]. The active config
+/// is resolved from the store's [AppConfigStore.active] environment.
+///
+/// @example
+/// ```dart
+/// UtilerScope(
+///   appConfig: AppConfigStore(
+///     active: AppEnvironment.production,
+///     configs: {
+///       AppEnvironment.development: AppConfig.fromMap(
+///         environment: AppEnvironment.development,
+///         data: {'api_base_url': 'http://localhost:8080'},
+///       ),
+///       AppEnvironment.production: AppConfig.fromMap(
+///         environment: AppEnvironment.production,
+///         data: {'api_base_url': 'https://api.example.com'},
+///       ),
+///     },
+///   ),
+///   child: MyApp(),
+/// );
+///
+/// // Later, anywhere in the app:
+/// final url = UtilerScope.config.active.require<String>('api_base_url');
+/// final timeout = UtilerScope.config.active.get<int>('timeout_seconds', fallback: 10);
+/// ```
+///
 /// #### Persistence
 /// Automatically saves:
 /// - Selected theme
@@ -127,6 +209,16 @@ import 'package:utiler/src/values/values_scope.dart';
 ///   showLogWidget: false,
 ///   themes: AppThemes.themes,
 ///   locales: AppLocales.locales,
+///   featureFlags: {
+///     'new_checkout': true,
+///     'beta_chat': false,
+///   },
+///   monitorConnectivity: true,
+///   onConnectivityChange: (status) => print(status),
+///   appConfig: AppConfigStore(
+///     active: AppEnvironment.production,
+///     configs: { /* ... */ },
+///   ),
 ///   child: MyApp(),
 /// );
 /// ```
@@ -157,6 +249,7 @@ class UtilerScope extends StatefulWidget {
     this.lifecycleListener,
     this.enabledLog = true,
     this.exportLog = false,
+    this.logExportDirectory,
     this.showLogWidget = false,
     this.themes,
     this.jsonThemes,
@@ -168,6 +261,9 @@ class UtilerScope extends StatefulWidget {
     this.themeAnimationDuration = const Duration(milliseconds: 500),
     this.localeAnimation,
     this.localeAnimationDuration = const Duration(milliseconds: 500),
+    this.featureFlags,
+    this.onConnectivityChange,
+    this.appConfig,
     super.key,
   });
 
@@ -182,6 +278,12 @@ class UtilerScope extends StatefulWidget {
 
   /// Whether logs should be exported to file.
   final bool exportLog;
+
+  /// Directory for log export when [exportLog] is `true`.
+  ///
+  /// Provide an absolute path from your app (e.g. from `path_provider` in the
+  /// host project). Ignored on web where file export is unavailable.
+  final String? logExportDirectory;
 
   /// Whether to show an in-app log console widget.
   final bool showLogWidget;
@@ -218,6 +320,74 @@ class UtilerScope extends StatefulWidget {
   /// Duration of animated locale reveal transitions.
   final Duration localeAnimationDuration;
 
+  /// Initial feature-flag definitions for the app.
+  ///
+  /// Pass a map of flag names to their boolean state. Missing keys resolve
+  /// to `false` when queried via [UtilerScope.flags].
+  ///
+  /// @example
+  /// ```dart
+  /// UtilerScope(
+  ///   featureFlags: {
+  ///     'new_checkout': true,
+  ///     'dark_mode_v2': false,
+  ///   },
+  ///   child: MyApp(),
+  /// );
+  /// ```
+  final Map<String, bool>? featureFlags;
+
+  /// Callback invoked whenever the [InternetStatus] changes.
+  ///
+  /// Only called when [monitorConnectivity] is `true`.
+  ///
+  /// @example
+  /// ```dart
+  /// UtilerScope(
+  ///   monitorConnectivity: true,
+  ///   onConnectivityChange: (status) {
+  ///     if (status == InternetStatus.disconnected) {
+  ///       showOfflineBanner();
+  ///     }
+  ///   },
+  ///   child: MyApp(),
+  /// );
+  /// ```
+  final void Function(InternetStatus status)? onConnectivityChange;
+
+  /// Environment-aware application configuration store.
+  ///
+  /// When provided, the store is made available globally via
+  /// [UtilerScope.config]. Access the active environment's settings through
+  /// [AppConfigStore.active].
+  ///
+  /// Throws [StateError] at access time if no config is registered for the
+  /// active environment (propagated from [AppConfigStore.active]).
+  ///
+  /// @example
+  /// ```dart
+  /// UtilerScope(
+  ///   appConfig: AppConfigStore(
+  ///     active: AppEnvironment.production,
+  ///     configs: {
+  ///       AppEnvironment.development: AppConfig.fromMap(
+  ///         environment: AppEnvironment.development,
+  ///         data: {'api_base_url': 'http://localhost:8080'},
+  ///       ),
+  ///       AppEnvironment.production: AppConfig.fromMap(
+  ///         environment: AppEnvironment.production,
+  ///         data: {'api_base_url': 'https://api.example.com'},
+  ///       ),
+  ///     },
+  ///   ),
+  ///   child: MyApp(),
+  /// );
+  ///
+  /// // Later, anywhere in the app:
+  /// final url = UtilerScope.config.active.require<String>('api_base_url');
+  /// ```
+  final AppConfigStore? appConfig;
+
   static Future<void> Function(ValuesAnimationType?)? _persistThemeAnimation;
   static Future<void> Function(ValuesAnimationType?)? _persistLocaleAnimation;
 
@@ -226,6 +396,42 @@ class UtilerScope extends StatefulWidget {
 
   /// Global context used by locale extensions.
   static BuildContext? localeContext;
+
+  /// The active [FeatureFlags] registry.
+  ///
+  /// Always safe to call — returns an empty registry (all flags `false`)
+  /// if no [featureFlags] map was provided to [UtilerScope].
+  ///
+  /// @example
+  /// ```dart
+  /// if (UtilerScope.flags.isEnabled('new_checkout')) {
+  ///   // show new checkout flow
+  /// }
+  /// ```
+  static FeatureFlags get flags => _flags;
+  static FeatureFlags _flags = FeatureFlags({});
+
+  /// The active [AppConfigStore].
+  ///
+  /// Throws [StateError] if accessed before [UtilerScope] is mounted or when
+  /// no [appConfig] was provided.
+  ///
+  /// @example
+  /// ```dart
+  /// final url = UtilerScope.config.active.require<String>('api_base_url');
+  /// final isDev = UtilerScope.config.active.isDevelopment;
+  /// ```
+  static AppConfigStore get config {
+    if (_config == null) {
+      throw StateError(
+        'UtilerScope.config: no AppConfigStore was provided. '
+        'Pass an appConfig to UtilerScope.',
+      );
+    }
+    return _config!;
+  }
+
+  static AppConfigStore? _config;
 
   /// Changes the global theme at runtime.
   ///
@@ -311,11 +517,15 @@ class UtilerScope extends StatefulWidget {
 
 class _UtilerScopeState extends State<UtilerScope> {
   late final Future<Widget> _initializedChild;
+  StreamSubscription<InternetStatus>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
     _initLogging();
+    _initFeatureFlags();
+    _initAppConfig();
+    _initConnectivity();
     UtilerScope._persistThemeAnimation = _persistThemeAnimation;
     UtilerScope._persistLocaleAnimation = _persistLocaleAnimation;
     ValuesRuntime.themeAnimation = widget.themeAnimation;
@@ -327,13 +537,41 @@ class _UtilerScopeState extends State<UtilerScope> {
   void dispose() {
     UtilerScope._persistThemeAnimation = null;
     UtilerScope._persistLocaleAnimation = null;
+    if (widget.onConnectivityChange != null) {
+      unawaited(_connectivitySubscription?.cancel());
+      unawaited(InternetConnectivity.dispose());
+    }
     super.dispose();
   }
 
   void _initLogging() {
     Logger.enabled = widget.enabledLog;
     Logger.export = widget.exportLog;
+    Logger.exportDirectory = widget.logExportDirectory;
     Logger.showWidget = widget.showLogWidget;
+  }
+
+  /// Initialises the global [FeatureFlags] registry from [widget.featureFlags].
+  void _initFeatureFlags() {
+    if (widget.featureFlags != null) {
+      UtilerScope._flags = FeatureFlags(widget.featureFlags!);
+    }
+  }
+
+  /// Registers the [AppConfigStore] from [widget.appConfig] globally.
+  void _initAppConfig() {
+    if (widget.appConfig != null) {
+      UtilerScope._config = widget.appConfig;
+    }
+  }
+
+  /// Subscribes to [InternetConnectivity.onStatusChange] when
+  /// [widget.monitorConnectivity] is `true`.
+  void _initConnectivity() {
+    if (widget.onConnectivityChange == null) return;
+    _connectivitySubscription = InternetConnectivity.onStatusChange
+        .asBroadcastStream()
+        .listen((status) => widget.onConnectivityChange?.call(status));
   }
 
   /// Internal database instance for persistence.

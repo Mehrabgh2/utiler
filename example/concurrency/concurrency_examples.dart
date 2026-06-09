@@ -20,7 +20,7 @@ class ConcurrencyExamples extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () async {
-                const executor = BactchExecutor();
+                const executor = BatchExecutor();
                 final results = await executor.execute([
                   () async => 'A',
                   () async => 'B',

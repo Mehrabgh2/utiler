@@ -1,3 +1,20 @@
+## 1.3.0
+
+### Added
+
+- `AppConfig`, `AppConfigStore`, `FeatureFlags`, and `FormValidator`.
+
+### Changed
+
+- Removed `path_provider` dependency — host apps pass storage paths for JSON DB and log export.
+- `JsonDatabase.init` and `Database.init` require `jsonStoragePath` from the caller.
+- `Logger.exportDirectory` must be set by the host app when `Logger.export` is enabled.
+- `UtilerScope` adds optional `logExportDirectory`.
+
+### Fixed
+
+- Web support: conditional IO for logger file export, internet lookup, and API file upload/download.
+
 ## 1.2.0
 
 ### Fixed

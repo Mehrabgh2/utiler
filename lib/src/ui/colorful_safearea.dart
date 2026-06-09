@@ -13,16 +13,16 @@ import 'package:flutter/material.dart';
 ///
 /// Example:
 /// ```dart
-/// ColorfulSafearea(
+/// ColorfulSafeArea(
 ///   color: Colors.white,
 ///   child: Scaffold(
 ///     body: Text('Hello'),
 ///   ),
 /// )
 /// ```
-class ColorfulSafearea extends StatelessWidget {
-  /// Creates a [ColorfulSafearea].
-  const ColorfulSafearea({
+class ColorfulSafeArea extends StatelessWidget {
+  /// Creates a [ColorfulSafeArea].
+  const ColorfulSafeArea({
     super.key,
     this.left = true,
     this.top = true,

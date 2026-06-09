@@ -1,6 +1,9 @@
-# 🚀 Utiler
+# Utiler
 
 A comprehensive **Dart/Flutter utility toolkit** — async handling, concurrency, logging, storage, networking, UI helpers, and global app configuration in one package.
+
+[![pub package](https://img.shields.io/pub/v/utiler.svg)](https://pub.dev/packages/utiler)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ```dart
 import 'package:utiler/utiler.dart';
@@ -8,11 +11,149 @@ import 'package:utiler/utiler.dart';
 
 ---
 
-## ✨ Features
+## Table of Contents
 
-### ⏱ Async Utilities
+| Module                                             | What it does                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| [UtilerScope](#-utilerscope--single-entry-point)   | Single entry point for theme, locale, logging, config & lifecycle    |
+| [Async Utilities](#-async-utilities)               | Debouncer, Throttler, and Retry for rate-limiting and resilience     |
+| [Concurrency Utilities](#-concurrency-utilities)   | Sequential and parallel task execution                               |
+| [Core Utilities](#-core-utilities)                 | Either, Guard, LazyValue, connectivity, app config & feature flags   |
+| [Form Validation](#-form-validation)               | Chainable, reusable validators for `TextFormField`                   |
+| [Database Layer](#-database-layer)                 | Unified JSON and secure key-value storage                            |
+| [API Service](#-api-service)                       | Typed HTTP client with parser registry and `Either` responses        |
+| [Logging System](#-logging-system)                 | Structured logging with in-app console and file export               |
+| [UI Utilities](#-ui-utilities)                     | Spacing helpers, safe area, keyboard dismiss, and responsive scaling |
+| [Extensions](#-extensions)                         | String, num, list, map, and context extension methods                |
+| [Feature Generator (CLI)](#-feature-generator-cli) | CLI tool to scaffold Clean Architecture features                     |
 
-**Debouncer** — delay rapid calls (search input, typing):
+---
+
+## 🌍 UtilerScope — Single Entry Point
+
+`UtilerScope` is the top-level widget that wires together theme, locale, logging, feature flags, app config, and lifecycle in a single place. Wrap your `runApp` with it and everything is ready throughout your widget tree.
+
+### Setup
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:utiler/utiler.dart';
+
+void main() {
+  runApp(
+    UtilerScope(
+      // Logging
+      enabledLog: true,
+      exportLog: false,
+      showLogWidget: false,
+
+      // Theming
+      jsonThemesAddress: const [
+        'assets/theme/light.json',
+        'assets/theme/dark.json',
+      ],
+      themeAnimation: ValuesAnimationType.circle,
+      themeAnimationDuration: Duration(milliseconds: 400),
+
+      // Localization
+      jsonLocalesAddress: const [
+        'assets/locale/en.json',
+        'assets/locale/fa.json',
+      ],
+      localeAnimation: ValuesAnimationType.blurReveal,
+      localeAnimationDuration: Duration(milliseconds: 400),
+
+      // Feature flags
+      featureFlags: const {
+        'new_checkout': true,
+        'beta_chat': false,
+      },
+
+      // Connectivity
+      onConnectivityChange: (status) {
+        if (status == InternetStatus.disconnected) {
+          debugPrint('No internet access');
+        }
+      },
+
+      // App config
+      appConfig: AppConfigStore(
+        active: AppEnvironment.production,
+        configs: {
+          AppEnvironment.development: AppConfig.fromMap(
+            environment: AppEnvironment.development,
+            data: {'api_base_url': 'http://localhost:8080'},
+          ),
+          AppEnvironment.production: AppConfig.fromMap(
+            environment: AppEnvironment.production,
+            data: {'api_base_url': 'https://api.example.com'},
+          ),
+        },
+      ),
+
+      // Lifecycle
+      lifecycleListener: (state) {
+        debugPrint('App lifecycle: $state');
+      },
+
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+### Change Theme & Locale
+
+```dart
+// With BuildContext
+context.changeAppTheme('dark');
+context.changeAppLocale('en');
+
+// Per-call animation override
+context.changeAppTheme('dark', ValuesAnimationType.circle);
+context.changeAppLocale('fa', ValuesAnimationType.blurReveal);
+
+// Without BuildContext
+UtilerScope.changeAppTheme('dark', ValuesAnimationType.circle);
+UtilerScope.changeAppLocale('en');
+```
+
+**Animation priority:** per-call `animation` → `UtilerScope` default → instant when both are `null`.
+
+```dart
+await UtilerScope.changeThemeAnimation(ValuesAnimationType.circle);
+await UtilerScope.changeThemeAnimation(null); // instant
+```
+
+### Access Values
+
+```dart
+context.appJsonTheme;
+context.appJsonLocale;
+'home.background'.cr;  // color from JSON theme
+'home.appbar'.tr;      // localized string
+```
+
+### Access App Config
+
+```dart
+final url = UtilerScope.config.active.require<String>('api_base_url');
+final timeout = UtilerScope.config.active.get<int>('timeout_seconds', fallback: 10);
+```
+
+### Access Feature Flags
+
+```dart
+if (UtilerScope.flags.isEnabled('new_checkout')) {
+  // show new flow
+}
+```
+
+---
+
+## ⏱ Async Utilities
+
+**Debouncer** — delay rapid calls (e.g. search input, typing):
 
 ```dart
 final debouncer = Debouncer(400);
@@ -45,19 +186,19 @@ final result = await retry.call<String>(
 
 ---
 
-### ⚡ Concurrency Utilities
+## ⚡ Concurrency Utilities
 
-**BatchExecutor** — run tasks one after another:
+**BatchExecutor** — run tasks sequentially:
 
 ```dart
-const executor = BactchExecutor();
+const executor = BatchExecutor();
 final results = await executor.execute([
   () async => await loadUsers(),
   () async => await loadPosts(),
 ]);
 ```
 
-**ParallelExecutor** — run tasks at the same time:
+**ParallelExecutor** — run tasks concurrently:
 
 ```dart
 final executor = ParallelExecutor();
@@ -70,7 +211,7 @@ final results = await executor.execute<String>([
 
 ---
 
-### 🧠 Core Utilities
+## 🧠 Core Utilities
 
 **InternetConnectivity** — check and listen to network status:
 
@@ -116,9 +257,72 @@ LifecycleHandler(
 )
 ```
 
+**AppConfig** — typed environment configuration:
+
+```dart
+final config = AppConfig.fromMap(
+  environment: AppEnvironment.production,
+  data: {
+    'api_base_url': 'https://api.example.com',
+    'timeout_seconds': 30,
+  },
+);
+
+final url = config.require<String>('api_base_url');
+final timeout = config.get<int>('timeout_seconds', fallback: 10);
+```
+
+**AppConfigStore** — switch between dev/staging/prod configs:
+
+```dart
+final store = AppConfigStore(
+  active: AppEnvironment.development,
+  configs: {
+    AppEnvironment.development: devConfig,
+    AppEnvironment.production: prodConfig,
+  },
+);
+
+final apiUrl = store.active.require<String>('api_base_url');
+```
+
+**FeatureFlags** — runtime feature toggles:
+
+```dart
+final flags = FeatureFlags({
+  'new_checkout': true,
+  'beta_chat': false,
+});
+
+if (flags.isEnabled('new_checkout')) {
+  // show new flow
+}
+```
+
 ---
 
-### 💾 Database Layer
+## ✅ Form Validation
+
+**FormValidator** — chainable rules for `TextFormField`:
+
+```dart
+final error = FormValidator()
+  .required()
+  .email()
+  .minLength(8)
+  .validate('user@example.com');
+
+TextFormField(
+  validator: FormValidator()
+    .required()
+    .iranianPhone()
+    .validate(),
+)
+```
+
+---
+
+## 💾 Database Layer
 
 > Import: `package:utiler/src/database/database.dart`
 
@@ -130,13 +334,18 @@ import 'package:utiler/src/database/json_database_data.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
 
 final db = Database();
-await db.init(true);
+await db.init(
+  logging: true,
+  jsonStoragePath: '/path/from/your/app',
+);
 
+// JSON storage
 await db.putJson(
   JsonDatabaseData(key: 'settings', data: {'theme': 'dark'}),
 );
 final settings = await db.getJson('settings');
 
+// Secure storage
 await db.putSecure(
   SecureDatabaseData(key: 'token', value: 'secret_token'),
 );
@@ -145,51 +354,68 @@ final token = await db.getSecure('token');
 
 ---
 
-### 🔌 Extensions
+## 🌐 API Service
 
-**String**
+Typed HTTP client with a parser registry and `Either`-style responses.
 
 ```dart
-'hello world'.toTitleCase;       // Hello World
-'hello world'.toSnakeCase;       // hello_world
-'123'.toIntOrNull;               // 123
-'123'.toPersianDigits();         // ۱۲۳
-'FF5733'.toColor;                // Color
+import 'package:http/http.dart' as http;
+import 'package:utiler/utiler.dart';
+
+final api = ApiService<AppError>(
+  client: http.Client(),
+  parsers: [PostParser(), UserParser()],
+  errorParser: AppErrorParser(),
+  baseUrl: 'https://api.example.com',
+  logging: true,
+);
+
+final response = await api.get<Post>('/posts/1');
+
+response.result.fold(
+  (error) => debugPrint(error.message),
+  (post) => debugPrint(post.title),
+);
 ```
 
-**Num**
+**ApiModel + ApiParser**
 
 ```dart
-123.toPersianNumber;             // ۱۲۳
-5.isBetween(1, 10);               // true
-180.toRadians;
-```
+class Post extends ApiModel<Post, PostParser> {
+  const Post({required this.id, required this.title});
+  final int id;
+  final String title;
 
-**List / Iterable / Map**
+  @override
+  List<Object?> get props => [id, title];
+}
 
-```dart
-[1, 1, 2, 3].unique;
-[1, 2, 3].firstOrNull;
-{'a': 1}.merge({'b': 2});
-```
+class PostParser extends ApiParser<Post> {
+  @override
+  Post fromJson(Map<String, dynamic> json) => Post(
+        id: json['id'] as int,
+        title: json['title'] as String,
+      );
 
-**Context**
-
-```dart
-context.isPortrait;
-context.size.width;
-context.size.height;
+  @override
+  Map<String, dynamic> toJson(Post model) => {
+        'id': model.id,
+        'title': model.title,
+      };
+}
 ```
 
 ---
 
-### 📊 Logging System
+## 📊 Logging System
 
 **Logger**
 
 ```dart
 Logger.enabled = true;
 Logger.showWidget = true;
+Logger.exportDirectory = '/path/from/your/app';
+Logger.export = true;
 await Logger.i('App started', tag: 'BOOT');
 ```
 
@@ -219,77 +445,26 @@ LoggerConsole(
 
 ---
 
-### 🌐 API Service
-
-Typed HTTP client with parser registry and `Either`-style responses.
-
-```dart
-import 'package:http/http.dart' as http;
-import 'package:utiler/utiler.dart';
-
-final api = ApiService<AppError>(
-  client: http.Client(),
-  parsers: [PostParser(), UserParser()],
-  errorParser: AppErrorParser(),
-  baseUrl: 'https://api.example.com',
-  logging: true,
-);
-
-final response = await api.get<Post>('/posts/1');
-
-response.result.fold(
-  (error) => debugPrint(error.message),
-  (post) => debugPrint(post.title),
-);
-```
-
-**ApiModel + ApiParser**
-
-```dart
-class Post extends ApiModel<Post, PostParser> {
-  const Post({required this.id, required this.title});
-  final int id;
-  final String title;
-  @override
-  List<Object?> get props => [id, title];
-}
-
-class PostParser extends ApiParser<Post> {
-  @override
-  Post fromJson(Map<String, dynamic> json) => Post(
-        id: json['id'] as int,
-        title: json['title'] as String,
-      );
-  @override
-  Map<String, dynamic> toJson(Post model) => {
-        'id': model.id,
-        'title': model.title,
-      };
-}
-```
-
----
-
-### 🎨 UI Utilities
+## 🎨 UI Utilities
 
 **Gaps & spacing**
 
 ```dart
 Column(children: [Text('Hello'), 16.v, Text('World')]);
-Row(children: [Icon(Icons.star), 8.h, Text('Rated')]);
+Row(children:   [Icon(Icons.star), 8.h, Text('Rated')]);
 ```
 
-**ColorfulSafearea** — colored safe area with padding control:
+**ColorfulSafeArea** — colored safe area with padding control:
 
 ```dart
-ColorfulSafearea(
+ColorfulSafeArea(
   color: Colors.white,
   maintainBottomViewPadding: true,
   child: Scaffold(body: HomePage()),
 )
 ```
 
-**KeyboardDismiss** — tap outside to close keyboard:
+**KeyboardDismiss** — tap outside to close the keyboard:
 
 ```dart
 KeyboardDismiss(child: LoginForm())
@@ -322,93 +497,47 @@ final width = Responsive.of(context).scale(100);
 
 ---
 
-### 🌍 UtilerScope
+## 🔌 Extensions
 
-Single entry point for theme, locale, logging, and lifecycle.
-
-**Setup**
+**String**
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:utiler/utiler.dart';
-
-void main() {
-  runApp(
-    UtilerScope(
-      enabledLog: true,
-      exportLog: true,
-      showLogWidget: true,
-      themeAnimation: ValuesAnimationType.circle,
-      localeAnimation: ValuesAnimationType.blurReveal,
-      jsonThemesAddress: const [
-        'assets/theme/light.json',
-        'assets/theme/dark.json',
-      ],
-      jsonLocalesAddress: const [
-        'assets/locale/en.json',
-        'assets/locale/fa.json',
-      ],
-      lifecycleListener: (state) {
-        debugPrint('App lifecycle: $state');
-      },
-      child: const MyApp(),
-    ),
-  );
-}
+'hello world'.toTitleCase;    // Hello World
+'hello world'.toSnakeCase;    // hello_world
+'123'.toIntOrNull;            // 123
+'123'.toPersianDigits();      // ۱۲۳
+'FF5733'.toColor;             // Color
 ```
 
-**Change theme & locale**
+**Num**
 
 ```dart
-context.changeAppTheme('dark');
-context.changeAppLocale('en');
-
-// Per-call animation (overrides UtilerScope default)
-context.changeAppTheme('dark', ValuesAnimationType.circle);
-context.changeAppLocale('fa', ValuesAnimationType.blurReveal);
-
-// Without BuildContext
-UtilerScope.changeAppTheme('dark', ValuesAnimationType.circle);
-UtilerScope.changeAppLocale('en');
+123.toPersianNumber;          // ۱۲۳
+5.isBetween(1, 10);           // true
+180.toRadians;
 ```
 
-**Animation priority:** per-call `animation` → `UtilerScope` default → instant when both are `null`.
+**List / Iterable / Map**
 
 ```dart
-await UtilerScope.changeThemeAnimation(ValuesAnimationType.circle);
-await UtilerScope.changeThemeAnimation(null); // instant
+[1, 1, 2, 3].unique;
+[1, 2, 3].firstOrNull;
+{'a': 1}.merge({'b': 2});
 ```
 
-**Access values**
+**Context**
 
 ```dart
-context.appJsonTheme;
-context.appJsonLocale;
-'home.background'.cr;  // color from JSON theme
-'home.appbar'.tr;      // localized string
+context.isPortrait;
+context.size.width;
+context.size.height;
 ```
 
 ---
 
-## 📦 Full Examples
+## 🛠 Feature Generator (CLI)
 
-Runnable demos for every module live in the `example/` folder:
-
-- `example/async/` — Debouncer, Throttler, Retry
-- `example/concurrency/` — Batch & parallel executors
-- `example/core/` — Either, Guard, LazyValue, connectivity
-- `example/database/` — JSON & secure storage
-- `example/extension/` — String, num, list, map helpers
-- `example/logger/` — Logger, PrettyLogger, StopwatchLogger
-- `example/service/` — ApiService
-- `example/ui/` — widgets and layout helpers
-- `example/main.dart` — UtilerScope demo
-
----
-
-## 🛠 Feature Generator (create_feature)
-
-CLI tool to generate Clean Architecture features.
+Generate Clean Architecture features from the command line:
 
 ```bash
 dart run utiler:create_feature -n feature_name -b -r
@@ -416,7 +545,7 @@ dart run utiler:create_feature -n feature_name -b -r
 
 | Flag                 | Description                       |
 | -------------------- | --------------------------------- |
-| `-n, --name`         | Feature name (required)           |
+| `-n, --name`         | Feature name _(required)_         |
 | `-b, --use-bloc`     | Add Bloc state management         |
 | `-r, --use-riverpod` | Add Riverpod dependency injection |
 
@@ -424,17 +553,35 @@ Generates a ready-to-use structure inside `lib/features/`.
 
 ---
 
+## 📦 Examples
+
+Runnable demos for every module live in the `example/` folder:
+
+| Folder                 | Covers                                                          |
+| ---------------------- | --------------------------------------------------------------- |
+| `example/async/`       | Debouncer, Throttler, Retry                                     |
+| `example/concurrency/` | Batch & parallel executors                                      |
+| `example/core/`        | Either, Guard, LazyValue, connectivity, AppConfig, FeatureFlags |
+| `example/validation/`  | FormValidator                                                   |
+| `example/database/`    | JSON & secure storage                                           |
+| `example/extension/`   | String, num, list, map helpers                                  |
+| `example/logger/`      | Logger, PrettyLogger, StopwatchLogger                           |
+| `example/service/`     | ApiService                                                      |
+| `example/ui/`          | Widgets and layout helpers                                      |
+| `example/main.dart`    | UtilerScope demo                                                |
+
+---
+
 ## 💡 Why Utiler?
 
-- All-in-one utility toolkit
-- Reduces boilerplate code
-- Improves code readability
-- Clean architecture friendly
+- All-in-one utility toolkit — one dependency, everything included
+- Reduces boilerplate and improves code readability
+- Clean Architecture friendly
 - Production-ready design for Flutter apps
 
 ---
 
 ## 📫 Contact
 
-- LinkedIn: https://linkedin.com/in/mehrab-ghasab-a3253814a
-- Telegram: https://t.me/mehrabgh1
+- LinkedIn: [mehrab-ghasab](https://linkedin.com/in/mehrab-ghasab-a3253814a)
+- Telegram: [@mehrabgh1](https://t.me/mehrabgh1)

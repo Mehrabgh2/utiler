@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:utiler/src/logger/log_file_sink_stub.dart'
+    if (dart.library.io) 'package:utiler/src/logger/log_file_sink_io.dart';
 import 'package:utiler/src/logger/log_level.dart';
 
 /// A flexible logging utility with support for console logs, file export,
@@ -33,8 +33,20 @@ class Logger {
   /// Enables or disables all logging output.
   static bool enabled = true;
 
-  /// Enables writing logs to a file.
+  /// Enables writing logs to a file when [exportDirectory] is set.
   static bool export = false;
+
+  /// Directory for log file export. Required when [export] is `true`.
+  ///
+  /// On mobile/desktop pass an absolute directory path from the host app.
+  /// On web pass a logical storage prefix (file export is skipped on web).
+  ///
+  /// @example
+  /// ```dart
+  /// Logger.exportDirectory = '/path/from/your/app';
+  /// Logger.export = true;
+  /// ```
+  static String? exportDirectory;
 
   /// Enables in-app log tracking via [logs].
   static bool showWidget = false;
@@ -132,7 +144,7 @@ class Logger {
       developer.log(msg, name: _getName(level));
     }
 
-    if (export) {
+    if (export && exportDirectory != null) {
       await _logToFile(
         '[${level == LogLevel.verbose ? tag : _getName(level)}] $msg',
       );
@@ -167,18 +179,12 @@ class Logger {
     }
   }
 
-  /// Writes a log entry to a local file (app.log).
+  /// Writes a log entry to `app.log` inside [exportDirectory].
   static Future<void> _logToFile(String message) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/app.log');
-
-      await file.writeAsString(
-        '${_removeColors(message)}\n',
-        mode: FileMode.append,
-      );
+      await appendLogToFile(exportDirectory!, _removeColors(message));
     } catch (_) {
-      e('Write log to file causing error');
+      await e('Write log to file causing error');
     }
   }
 

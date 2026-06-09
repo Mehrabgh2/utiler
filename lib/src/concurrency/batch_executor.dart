@@ -5,7 +5,7 @@ import 'package:utiler/src/core/guard.dart';
 /// Executes a batch of asynchronous functions sequentially while safely
 /// capturing errors.
 ///
-/// The [BactchExecutor] (likely intended as *BatchExecutor*) runs a list of
+/// The [BatchExecutor] (likely intended as *BatchExecutor*) runs a list of
 /// async operations one after another. Each operation is wrapped in [Guard]
 /// to prevent exceptions from breaking the execution flow.
 ///
@@ -15,7 +15,7 @@ import 'package:utiler/src/core/guard.dart';
 ///
 /// Example:
 /// ```dart
-/// final executor = BactchExecutor();
+/// final executor = BatchExecutor();
 ///
 /// final results = await executor.execute([
 ///   () async => await fetchUser(),
@@ -25,9 +25,9 @@ import 'package:utiler/src/core/guard.dart';
 ///
 /// print(results);
 /// ```
-class BactchExecutor {
-  /// Creates a constant [BactchExecutor].
-  const BactchExecutor();
+class BatchExecutor {
+  /// Creates a constant [BatchExecutor].
+  const BatchExecutor();
 
   /// Executes a list of asynchronous functions sequentially.
   ///

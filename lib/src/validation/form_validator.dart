@@ -23,6 +23,22 @@ class FormValidator {
   FormValidator();
 
   final List<_ValidationRule> _rules = [];
+  bool _isOptional = false;
+
+  /// Marks all subsequent rules as skippable when the value is blank.
+  ///
+  /// When the value is `null` or contains only whitespace, [validate]
+  /// immediately returns `null` without evaluating any rule. Useful for
+  /// optional fields that still have format constraints when filled.
+  ///
+  /// ```dart
+  /// // Passes when empty; validates format when filled:
+  /// FormValidator().optional().email().build()
+  /// ```
+  FormValidator optional() {
+    _isOptional = true;
+    return this;
+  }
 
   /// Value must not be null or empty.
   FormValidator required({String message = 'This field is required.'}) {
@@ -308,7 +324,10 @@ class FormValidator {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   /// Runs all rules against [value]. Returns the first error, or `null`.
+  ///
+  /// Returns `null` immediately for blank input when [optional] was called.
   String? validate(String? value) {
+    if (_isOptional && (value == null || value.trim().isEmpty)) return null;
     for (final rule in _rules) {
       final error = rule.check(value);
       if (error != null) {

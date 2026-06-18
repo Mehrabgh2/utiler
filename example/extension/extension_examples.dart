@@ -38,9 +38,24 @@ class ExtensionExamples extends StatelessWidget {
               const Text('Hello'),
               16.h,
               const Text('World'),
-              8.v, // just to show property availability; inside Row it will be treated as a box
             ],
           ),
+        ),
+        const SizedBox(height: 12),
+        Text('DateTime:'.toTitleCase),
+        const SizedBox(height: 8),
+        Text('isToday: ${DateTime.now().isToday}'),
+        const SizedBox(height: 8),
+        Text('isPast: ${DateTime.now().subtract(const Duration(days: 1)).isPast}'),
+        const SizedBox(height: 8),
+        Text(
+          'timeAgo: ${DateTime.now().subtract(const Duration(hours: 3)).timeAgo}',
+        ),
+        const SizedBox(height: 8),
+        Text('format: ${DateTime.now().format('yyyy/MM/dd')}'),
+        const SizedBox(height: 8),
+        Text(
+          'isSameDay: ${DateTime.now().isSameDay(DateTime.now())}',
         ),
       ],
     );

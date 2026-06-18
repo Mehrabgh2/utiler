@@ -1,11 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/json_database_data.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
-
-/// Hive prefix on web; use a real directory path from your app on mobile.
-String get _jsonStoragePath => kIsWeb ? 'utiler_hive' : 'utiler_demo_db';
 
 class DatabaseExamples extends StatefulWidget {
   const DatabaseExamples({super.key});
@@ -34,7 +30,7 @@ class _DatabaseExamplesState extends State<DatabaseExamples> {
             ElevatedButton(
               onPressed: () async {
                 final db = Database();
-                await db.init(logging: true, jsonStoragePath: _jsonStoragePath);
+                await db.init(logging: true);
 
                 await db.putJson(
                   JsonDatabaseData(key: 'settings', data: {'theme': 'dark'}),
@@ -62,10 +58,7 @@ class _DatabaseExamplesState extends State<DatabaseExamples> {
             ElevatedButton(
               onPressed: () async {
                 final db = Database();
-                await db.init(
-                  logging: false,
-                  jsonStoragePath: _jsonStoragePath,
-                );
+                await db.init(logging: false);
                 await db.clearJson();
                 await db.clearSecure();
                 setState(() => _status = 'Cleared Json + Secure');

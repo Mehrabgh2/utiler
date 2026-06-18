@@ -1,3 +1,27 @@
+## 1.4.0
+
+### Added
+
+- `PerformanceMonitor` — live glassmorphism overlay that tracks nine real-time metrics. All values are **app-only**, not device-wide.
+  - **FPS**, **jank frames**, **UI build time**, **raster time** — via `SchedulerBinding.addTimingsCallback`.
+  - **Memory** (current RSS) and **peak memory** — via `dart:io` `ProcessInfo` (N/A on web).
+  - **UI-thread load** — approximated by measuring `Future.delayed` latency drift.
+- `UtilerScope.showPerformanceMonitor` — boolean flag.
+- `AsyncGuard` — async counterpart to `Guard`; correctly catches both synchronous and asynchronous errors.
+- `TimedCache<K, V>` — in-memory key-value cache with per-entry TTL and lazy eviction.
+- `ConnectivityWidget` — widget that rebuilds automatically when `InternetStatus` changes.
+- `AsyncFormValidator` — chainable async form validator supporting server-side rules (e.g. username uniqueness checks).
+- `DateTimeExtensions` — extensions on `DateTime`: `isToday`, `isYesterday`, `isTomorrow`, `isPast`, `isFuture`, `timeAgo`, `format(pattern)`, `startOfDay`, `endOfDay`, `isSameDay`.
+- `Either.map`, `Either.mapLeft`, `Either.flatMap`, `Either.getOrElse`, `Either.getOrElseCompute` — standard functional operators for transforming and chaining `Either` values.
+- `Debouncer.flush()` — executes the pending action immediately and cancels the timer; useful before form submission.
+- `Retry.callOrThrow` — retries and re-throws the last error on exhaustion instead of returning `null`.
+- `Retry.onError` callback — optional per-attempt error hook on both `call` and `callOrThrow`.
+- `FormValidator.optional()` — marks all subsequent rules as skippable when the field is blank.
+
+### Fixed
+
+- Fix database export
+
 ## 1.3.0
 
 ### Added

@@ -51,17 +51,10 @@ class Database {
   static final SecureDatabase _secureDb = SecureDatabase();
 
   /// Initializes secure storage and optionally the JSON database.
-  ///
-  /// [jsonStoragePath] is required when using JSON operations:
-  /// - mobile/desktop: absolute directory from your app
-  /// - web: logical Hive prefix (e.g. `'utiler_hive'`)
-  ///
   /// If [logging] is true, internal operations log their status and errors.
-  Future<void> init({bool logging = false, String? jsonStoragePath}) async {
+  Future<void> init({bool logging = false}) async {
     await _secureDb.init(logging);
-    if (jsonStoragePath != null) {
-      await _jsonDb.init(storagePath: jsonStoragePath, logging: logging);
-    }
+    await _jsonDb.init(logging: logging);
   }
 
   // ---------------------------------------------------------------------------

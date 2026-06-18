@@ -1,25 +1,34 @@
 /// Extensions on [String] providing formatting, parsing, and utility helpers.
-///
-/// These helpers make it easier to transform strings into common formats
-/// such as camelCase, snake_case, title case, and also provide safe parsing
-/// and comparison utilities.
 extension StringExtensions on String {
   /// Returns `true` if the string is empty or contains only whitespace.
   ///
   /// Example:
   /// ```dart
-  /// ''.isNullOrEmpty // true
-  /// '   '.isNullOrEmpty // true
+  /// ''.isBlank      // true
+  /// '   '.isBlank   // true
+  /// 'hi'.isBlank    // false
   /// ```
-  bool get isNullOrEmpty => isEmpty || isWhitespaceOnly;
+  bool get isBlank => trim().isEmpty;
+
+  /// Alias for [isBlank]. Kept for backwards compatibility.
+  bool get isNullOrEmpty => isBlank;
 
   /// Returns `true` if the string contains only whitespace characters.
+  bool get isWhitespaceOnly => trim().isEmpty;
+
+  /// Capitalizes the first letter of the string.
+  ///
+  /// Returns the string unchanged if it is empty.
   ///
   /// Example:
   /// ```dart
-  /// '   '.isWhitespaceOnly // true
+  /// 'hello'.capitalize // Hello
+  /// ''.capitalize      // ''
   /// ```
-  bool get isWhitespaceOnly => trim().isEmpty;
+  String get capitalize {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
 
   /// Converts the string to Title Case (each word capitalized).
   ///
@@ -31,42 +40,48 @@ extension StringExtensions on String {
 
   /// Converts the string to snake_case.
   ///
+  /// Handles space-separated words, camelCase, and PascalCase input.
+  ///
   /// Example:
   /// ```dart
   /// 'hello world'.toSnakeCase // hello_world
+  /// 'helloWorld'.toSnakeCase  // hello_world
+  /// 'HTMLParser'.toSnakeCase  // html_parser
   /// ```
-  String get toSnakeCase => toLowerCase().replaceAll(' ', '_');
+  String get toSnakeCase {
+    return replaceAllMapped(
+      RegExp(r'(?<=[a-z\d])([A-Z])|(?<=[A-Z])(?=[A-Z][a-z])'),
+      (m) => '_${m.group(0)!}',
+    ).replaceAll(RegExp(r'[\s-]+'), '_').toLowerCase();
+  }
 
-  /// Converts the string to CamelCase.
+  /// Converts the string to camelCase (first word lowercase, rest capitalized).
   ///
   /// Example:
   /// ```dart
-  /// 'hello world'.toCamelCase // HelloWorld
+  /// 'hello world'.toCamelCase // helloWorld
+  /// 'Hello World'.toCamelCase // helloWorld
   /// ```
-  String get toCamelCase => split(' ').map((s) => s.capitalize).join();
+  String get toCamelCase {
+    final words = split(' ').where((s) => s.isNotEmpty).toList();
+    if (words.isEmpty) return this;
+    return words.first.toLowerCase() +
+        words.skip(1).map((s) => s.capitalize).join();
+  }
 
-  /// Capitalizes the first letter of the string.
+  /// Converts the string to PascalCase (every word capitalized, no separator).
   ///
   /// Example:
   /// ```dart
-  /// 'hello'.capitalize // Hello
+  /// 'hello world'.toPascalCase // HelloWorld
   /// ```
-  String get capitalize => replaceRange(0, 1, this[0].toUpperCase());
+  String get toPascalCase =>
+      split(' ').where((s) => s.isNotEmpty).map((s) => s.capitalize).join();
 
   /// Returns a lowercase version of the string.
-  ///
-  /// Example:
-  /// ```dart
-  /// 'Hello'.lowercase // hello
-  /// ```
   String get lowercase => toLowerCase();
 
   /// Returns an uppercase version of the string.
-  ///
-  /// Example:
-  /// ```dart
-  /// 'Hello'.uppercase // HELLO
-  /// ```
   String get uppercase => toUpperCase();
 
   /// Checks whether the string contains [substring], ignoring case.
@@ -100,22 +115,22 @@ extension StringExtensions on String {
     }
   }
 
-  /// Truncates the string to [maxLength] and appends ellipsis if needed.
+  /// Truncates the string to [maxLength] and appends `'...'` if needed.
   ///
   /// Example:
   /// ```dart
-  /// 'Hello World'.truncate(maxLength: 5) // Hello ...
+  /// 'Hello World'.truncate(maxLength: 5) // Hello...
   /// ```
   String truncate({int maxLength = 20}) {
     if (length <= maxLength) return this;
-    return '${substring(0, maxLength)} ...';
+    return '${substring(0, maxLength)}...';
   }
 
   /// Converts ASCII digits in the string to Persian numerals.
   ///
   /// Example:
   /// ```dart
-  /// '123'.toPersianDigits // ۱۲۳
+  /// '123'.toPersianDigits() // ۱۲۳
   /// ```
   String toPersianDigits() {
     final buffer = StringBuffer();
@@ -127,8 +142,6 @@ extension StringExtensions on String {
 }
 
 /// Mapping of Latin digits to Persian numerals.
-///
-/// Used internally by [StringExtensions.toPersianDigits].
 const Map<String, String> _persianDigits = {
   '0': '۰',
   '1': '۱',

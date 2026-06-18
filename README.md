@@ -18,13 +18,14 @@ import 'package:utiler/utiler.dart';
 | [UtilerScope](#-utilerscope--single-entry-point)   | Single entry point for theme, locale, logging, config & lifecycle    |
 | [Async Utilities](#-async-utilities)               | Debouncer, Throttler, and Retry for rate-limiting and resilience     |
 | [Concurrency Utilities](#-concurrency-utilities)   | Sequential and parallel task execution                               |
-| [Core Utilities](#-core-utilities)                 | Either, Guard, LazyValue, connectivity, app config & feature flags   |
-| [Form Validation](#-form-validation)               | Chainable, reusable validators for `TextFormField`                   |
+| [Core Utilities](#-core-utilities)                 | Either, Guard, AsyncGuard, TimedCache, connectivity, config & flags  |
+| [Form Validation](#-form-validation)               | Chainable sync and async validators for `TextFormField`              |
 | [Database Layer](#-database-layer)                 | Unified JSON and secure key-value storage                            |
 | [API Service](#-api-service)                       | Typed HTTP client with parser registry and `Either` responses        |
 | [Logging System](#-logging-system)                 | Structured logging with in-app console and file export               |
+| [Performance Monitor](#-performance-monitor)       | Live glassmorphism overlay with real-time app metrics                |
 | [UI Utilities](#-ui-utilities)                     | Spacing helpers, safe area, keyboard dismiss, and responsive scaling |
-| [Extensions](#-extensions)                         | String, num, list, map, and context extension methods                |
+| [Extensions](#-extensions)                         | String, num, list, map, DateTime, and context extension methods      |
 | [Feature Generator (CLI)](#-feature-generator-cli) | CLI tool to scaffold Clean Architecture features                     |
 
 ---
@@ -46,6 +47,7 @@ void main() {
       enabledLog: true,
       exportLog: false,
       showLogWidget: false,
+      showPerformanceMonitor: false, // dev-only: live metrics overlay
 
       // Theming
       jsonThemesAddress: const [
@@ -161,6 +163,9 @@ final debouncer = Debouncer(400);
 void onSearchChanged(String query) {
   debouncer(() => fetchResults(query));
 }
+
+// Execute immediately without waiting for the delay (e.g. on form submit)
+debouncer.flush();
 ```
 
 **Throttler** — limit how often an action runs:
@@ -177,10 +182,19 @@ void onButtonTap() {
 
 ```dart
 final retry = Retry();
+
+// Returns null on exhaustion
 final result = await retry.call<String>(
   () => unstableNetworkCall(),
   maxAttempts: 5,
   delayMilliseconds: 400,
+  onError: (error, attempt) => debugPrint('Attempt $attempt failed: $error'),
+);
+
+// Throws the last error on exhaustion instead of returning null
+final data = await retry.callOrThrow<String>(
+  () => unstableNetworkCall(),
+  maxAttempts: 3,
 );
 ```
 
@@ -232,12 +246,35 @@ result.fold(
   (error) => debugPrint('Error: $error'),
   (value) => debugPrint('Success: $value'),
 );
+
+// Transform the right value
+result.map((n) => n * 2);                        // Right(84)
+result.mapLeft((e) => e.toUpperCase());          // Left('ERROR')
+result.flatMap((n) => n > 0 ? Right(n) : Left('negative'));
+result.getOrElse(0);                             // 42 or fallback
 ```
 
 **Guard** — safe sync execution (returns `null` on error):
 
 ```dart
 final value = Guard<int>()(() => int.parse(userInput));
+```
+
+**AsyncGuard** — same as `Guard` but for async functions:
+
+```dart
+final data = await AsyncGuard<String>()(() async => fetchData());
+// returns null if fetchData() throws, instead of propagating
+```
+
+**TimedCache** — in-memory cache with per-entry TTL:
+
+```dart
+final cache = TimedCache<String, User>(ttl: const Duration(minutes: 5));
+
+cache.set('user_42', user);
+final cached = cache.get('user_42'); // null after TTL expires
+cache.evictExpired();
 ```
 
 **LazyValue** — compute once, cache the result:
@@ -306,18 +343,28 @@ if (flags.isEnabled('new_checkout')) {
 **FormValidator** — chainable rules for `TextFormField`:
 
 ```dart
-final error = FormValidator()
+TextFormField(
+  validator: FormValidator().required().email().build(),
+)
+
+// optional() skips all rules when the field is blank
+TextFormField(
+  validator: FormValidator().optional().email().minLength(6).build(),
+)
+```
+
+**AsyncFormValidator** — for rules that require async work (e.g. server-side uniqueness checks):
+
+```dart
+final validator = AsyncFormValidator()
   .required()
   .email()
-  .minLength(8)
-  .validate('user@example.com');
+  .rule((value) async {
+    final taken = await api.isEmailTaken(value!);
+    return taken ? 'Email already in use' : null;
+  });
 
-TextFormField(
-  validator: FormValidator()
-    .required()
-    .iranianPhone()
-    .validate(),
-)
+final error = await validator.validate('user@example.com');
 ```
 
 ---
@@ -445,6 +492,33 @@ LoggerConsole(
 
 ---
 
+## 📈 Performance Monitor
+
+A live glassmorphism overlay with nine real-time app metrics. All values are **app-only** — no native code required, works on all platforms.
+
+| Metric | Source |
+|---|---|
+| FPS, jank count, total frames | `SchedulerBinding` frame timings |
+| Build time, raster time, vsync overhead | `FrameTiming` |
+| GPU raster cache | `FrameTiming.layerCacheBytes` |
+| Memory (current & peak RSS) | `dart:io` `ProcessInfo` · N/A on web |
+
+Enable via `UtilerScope`:
+
+```dart
+UtilerScope(showPerformanceMonitor: true, child: const MyApp())
+```
+
+Or wrap directly:
+
+```dart
+PerformanceMonitor(child: const MyApp())
+```
+
+When both `showLogWidget` and `showPerformanceMonitor` are enabled, the FABs sit side by side automatically.
+
+---
+
 ## 🎨 UI Utilities
 
 **Gaps & spacing**
@@ -489,6 +563,16 @@ ExpandableWidget(
 )
 ```
 
+**ConnectivityWidget** — rebuilds automatically when internet status changes:
+
+```dart
+ConnectivityWidget(
+  connected: (context) => const OnlineContent(),
+  disconnected: (context) => const OfflineBanner(),
+  vpn: (context) => const VpnNotice(), // optional
+)
+```
+
 **Responsive** — scale sizes to screen:
 
 ```dart
@@ -525,6 +609,17 @@ final width = Responsive.of(context).scale(100);
 {'a': 1}.merge({'b': 2});
 ```
 
+**DateTime**
+
+```dart
+DateTime.now().isToday;        // true
+DateTime.now().isPast;         // false
+someDate.timeAgo;              // '3 hours ago'
+someDate.format('yyyy/MM/dd'); // '2026/06/19'
+someDate.startOfDay;           // 2026-06-19 00:00:00
+someDate.isSameDay(otherDate); // true / false
+```
+
 **Context**
 
 ```dart
@@ -557,18 +652,18 @@ Generates a ready-to-use structure inside `lib/features/`.
 
 Runnable demos for every module live in the `example/` folder:
 
-| Folder                 | Covers                                                          |
-| ---------------------- | --------------------------------------------------------------- |
-| `example/async/`       | Debouncer, Throttler, Retry                                     |
-| `example/concurrency/` | Batch & parallel executors                                      |
-| `example/core/`        | Either, Guard, LazyValue, connectivity, AppConfig, FeatureFlags |
-| `example/validation/`  | FormValidator                                                   |
-| `example/database/`    | JSON & secure storage                                           |
-| `example/extension/`   | String, num, list, map helpers                                  |
-| `example/logger/`      | Logger, PrettyLogger, StopwatchLogger                           |
-| `example/service/`     | ApiService                                                      |
-| `example/ui/`          | Widgets and layout helpers                                      |
-| `example/main.dart`    | UtilerScope demo                                                |
+| Folder                 | Covers                                                                     |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `example/async/`       | Debouncer (+ flush), Throttler, Retry (+ callOrThrow, onError)             |
+| `example/concurrency/` | Batch & parallel executors                                                 |
+| `example/core/`        | Either (+ map/flatMap), Guard, AsyncGuard, TimedCache, LazyValue, AppConfig, FeatureFlags, ConnectivityWidget |
+| `example/validation/`  | FormValidator (+ optional), AsyncFormValidator                             |
+| `example/database/`    | JSON & secure storage                                                      |
+| `example/extension/`   | String, num, list, map, DateTime helpers                                   |
+| `example/logger/`      | Logger, PrettyLogger, StopwatchLogger                                      |
+| `example/service/`     | ApiService                                                                 |
+| `example/ui/`          | Widgets and layout helpers                                                 |
+| `example/main.dart`    | UtilerScope demo (with PerformanceMonitor)                                 |
 
 ---
 

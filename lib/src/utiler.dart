@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:utiler/src/core/app_config.dart';
 import 'package:utiler/src/core/feature_flags.dart';
+import 'package:utiler/src/utiler_scope.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_extension.dart';
 import 'package:utiler/src/values/theme/theme_extension.dart';
@@ -118,6 +119,11 @@ abstract final class Utiler {
 
   // ── theme ──────────────────────────────────────────────────────────────────
 
+  /// Returns the currently active theme ID.
+  ///
+  /// Returns `null` if no theme is active.
+  static String? get currentThemeId => themeContext?.currentThemeId;
+
   /// Changes the global theme at runtime.
   ///
   /// Animation priority: [animation] → default from [UtilerScope.themeAnimation] → instant.
@@ -153,6 +159,11 @@ abstract final class Utiler {
       ValuesRuntime.themeAnimation;
 
   // ── locale ─────────────────────────────────────────────────────────────────
+
+  /// Returns the current locale identifier (e.g. `"en"`, `"fa"`).
+  ///
+  /// Returns `null` if no locale is active.
+  static String? get currentLocaleId => localeContext?.currentLocaleId;
 
   /// Changes the global locale at runtime.
   ///

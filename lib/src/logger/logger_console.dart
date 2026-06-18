@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:utiler/src/logger/log_level.dart';
 import 'package:utiler/src/logger/logger.dart';
+import 'package:utiler/src/ui/overlay_coordinator.dart';
 
 /// A full-screen in-app logging console overlay for debugging Flutter applications.
 ///
@@ -98,6 +99,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
   /// init scrollController
   @override
   void initState() {
+    OverlayCoordinator.performanceOpen.addListener(_onPerformanceChanged);
     Logger.scrollController.addListener(() {
       if (Logger.scrollController.positions.isNotEmpty &&
           Logger.scrollController.position.pixels >=
@@ -111,6 +113,16 @@ class _LoggerConsoleState extends State<LoggerConsole> {
       }
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    OverlayCoordinator.performanceOpen.removeListener(_onPerformanceChanged);
+    super.dispose();
+  }
+
+  void _onPerformanceChanged() {
+    if (mounted) setState(() {});
   }
 
   /// build logger console bottomsheet drawer
@@ -157,6 +169,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
                               setState(() {
                                 isShow = false;
                               });
+                              OverlayCoordinator.loggerOpen.value = false;
                             },
                             icon: Icon(
                               Icons.keyboard_arrow_down_rounded,
@@ -318,7 +331,9 @@ class _LoggerConsoleState extends State<LoggerConsole> {
             ),
           ),
           AnimatedPositioned(
-            bottom: isShow ? -100 : 20,
+            bottom: isShow || OverlayCoordinator.performanceOpen.value
+                ? -100
+                : 20,
             left: 20,
             duration: const Duration(milliseconds: 500),
             child: ClipRRect(
@@ -349,6 +364,7 @@ class _LoggerConsoleState extends State<LoggerConsole> {
                       setState(() {
                         isShow = true;
                       });
+                      OverlayCoordinator.loggerOpen.value = true;
                     },
                     icon: Icon(
                       Icons.keyboard_arrow_up_rounded,

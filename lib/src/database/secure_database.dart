@@ -54,11 +54,10 @@ class SecureDatabase {
   /// Performs a lightweight write/read test to ensure storage is available.
   /// If [logging] is true, initialization status is logged.
   Future<void> init(bool logging) async {
+    _logging = logging;
     try {
       await put(SecureDatabaseData(key: 'init', value: 'init'));
       await delete('init');
-
-      _logging = logging;
 
       if (_logging) {
         PrettyLogger.s('Secure database initialized successfuly');

@@ -183,9 +183,7 @@ class Logger {
   static Future<void> _logToFile(String message) async {
     try {
       await appendLogToFile(exportDirectory!, _removeColors(message));
-    } catch (_) {
-      await e('Write log to file causing error');
-    }
+    } catch (_) {}
   }
 
   /// Removes ANSI color codes from log strings.

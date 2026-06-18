@@ -57,6 +57,63 @@ sealed class Either<L, R> {
     }
   }
 
+  /// Transforms the right value with [f], leaving [Left] unchanged.
+  ///
+  /// ```dart
+  /// Right<String, int>(2).map((n) => n * 3); // Right(6)
+  /// Left<String, int>('err').map((n) => n * 3); // Left('err')
+  /// ```
+  Either<L, R2> map<R2>(R2 Function(R value) f) => switch (this) {
+    Left<L, R>(:final value) => Left(value),
+    Right<L, R>(:final value) => Right(f(value)),
+  };
+
+  /// Transforms the left value with [f], leaving [Right] unchanged.
+  ///
+  /// ```dart
+  /// Left<String, int>('err').mapLeft((e) => e.toUpperCase()); // Left('ERR')
+  /// ```
+  Either<L2, R> mapLeft<L2>(L2 Function(L value) f) => switch (this) {
+    Left<L, R>(:final value) => Left(f(value)),
+    Right<L, R>(:final value) => Right(value),
+  };
+
+  /// Chains an Either-returning computation on the right value.
+  ///
+  /// Short-circuits to [Left] if this is already a [Left].
+  ///
+  /// ```dart
+  /// Right<String, int>(42)
+  ///   .flatMap((n) => n > 0 ? Right(n * 2) : Left('negative')); // Right(84)
+  /// ```
+  Either<L, R2> flatMap<R2>(Either<L, R2> Function(R value) f) =>
+      switch (this) {
+        Left<L, R>(:final value) => Left(value),
+        Right<L, R>(:final value) => f(value),
+      };
+
+  /// Returns the right value, or [fallback] if this is a [Left].
+  ///
+  /// ```dart
+  /// Right<String, int>(42).getOrElse(0);  // 42
+  /// Left<String, int>('err').getOrElse(0); // 0
+  /// ```
+  R getOrElse(R fallback) => switch (this) {
+    Left() => fallback,
+    Right<L, R>(:final value) => value,
+  };
+
+  /// Returns the right value, or the result of [compute] applied to the left
+  /// value.
+  ///
+  /// ```dart
+  /// Left<String, int>('err').getOrElseCompute((e) => e.length); // 3
+  /// ```
+  R getOrElseCompute(R Function(L left) compute) => switch (this) {
+    Left<L, R>(:final value) => compute(value),
+    Right<L, R>(:final value) => value,
+  };
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

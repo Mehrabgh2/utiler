@@ -11,6 +11,7 @@ import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/secure_database_data.dart';
 import 'package:utiler/src/logger/logger.dart';
 import 'package:utiler/src/logger/logger_console.dart';
+import 'package:utiler/src/performance/performance_monitor.dart';
 import 'package:utiler/src/utiler.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_values.dart';
@@ -156,6 +157,7 @@ class UtilerScope extends StatefulWidget {
     this.exportLog = false,
     this.logExportDirectory,
     this.showLogWidget = false,
+    this.showPerformanceMonitor = false,
     this.themes,
     this.jsonThemes,
     this.jsonThemesAddress,
@@ -192,6 +194,15 @@ class UtilerScope extends StatefulWidget {
 
   /// Whether to show an in-app log console overlay.
   final bool showLogWidget;
+
+  /// Whether to show the live [PerformanceMonitor] overlay.
+  ///
+  /// When `true`, a floating speed icon appears at the bottom-right corner of
+  /// the screen. Tapping it opens a glassmorphism panel with real-time metrics:
+  /// FPS, memory, battery, build time, raster time, UI-thread load, and jank.
+  ///
+  /// Intended for **development use only**. Disable before publishing.
+  final bool showPerformanceMonitor;
 
   /// Typed theme definitions. Mutually exclusive with [jsonThemes] and
   /// [jsonThemesAddress].
@@ -379,6 +390,13 @@ class _UtilerScopeState extends State<UtilerScope> {
       finalChild = LoggerConsole(child: finalChild);
     }
 
+    if (widget.showPerformanceMonitor) {
+      finalChild = PerformanceMonitor(
+        hasLoggerConsole: widget.showLogWidget,
+        child: finalChild,
+      );
+    }
+
     final hasThemes =
         widget.themes != null ||
         widget.jsonThemes != null ||
@@ -391,33 +409,48 @@ class _UtilerScopeState extends State<UtilerScope> {
 
     if (!hasThemes && !hasLocales) return finalChild;
 
+    // Resolve JSON assets first so we can read their first key for seeding.
+    final resolvedJsonThemes =
+        hasThemes && widget.jsonThemesAddress != null
+            ? await Future.wait<Map<String, dynamic>>(
+                widget.jsonThemesAddress!.map(_readAsset),
+              )
+            : widget.jsonThemes;
+    final resolvedJsonLocales =
+        hasLocales && widget.jsonLocalesAddress != null
+            ? await Future.wait<Map<String, dynamic>>(
+                widget.jsonLocalesAddress!.map(_readAsset),
+              )
+            : widget.jsonLocales;
+
     final savedTheme = await _getSavedTheme();
     final savedLocale = await _getSavedLocale();
-    final savedThemeAnimation = await _getSavedThemeAnimation();
-    final savedLocaleAnimation = await _getSavedLocaleAnimation();
 
-    if (savedTheme != null) ValuesRuntime.currentThemeId = savedTheme;
-    if (savedLocale != null) ValuesRuntime.currentLocaleId = savedLocale;
-    if (savedThemeAnimation != null) {
-      ValuesRuntime.themeAnimation = savedThemeAnimation;
+    // Theme — apply saved value or seed the DB with the first theme on first launch.
+    if (savedTheme != null) {
+      ValuesRuntime.currentThemeId = savedTheme;
+    } else {
+      final initial = _firstThemeId(resolvedJsonThemes);
+      if (initial != null) {
+        await _database.putSecure(SecureDatabaseData(key: 'theme', value: initial));
+      }
     }
-    if (savedLocaleAnimation != null) {
-      ValuesRuntime.localeAnimation = savedLocaleAnimation;
+
+    // Locale — apply saved value or seed the DB on first launch.
+    if (savedLocale != null) {
+      ValuesRuntime.currentLocaleId = savedLocale;
+    } else {
+      final initial = _firstLocaleId(resolvedJsonLocales);
+      if (initial != null) {
+        await _database.putSecure(SecureDatabaseData(key: 'locale', value: initial));
+      }
     }
 
     return ValuesScope(
       locales: widget.locales,
       themes: widget.themes,
-      jsonLocales: hasLocales && widget.jsonLocalesAddress != null
-          ? await Future.wait<Map<String, dynamic>>(
-              widget.jsonLocalesAddress!.map(_readAsset),
-            )
-          : widget.jsonLocales,
-      jsonThemes: hasThemes && widget.jsonThemesAddress != null
-          ? await Future.wait<Map<String, dynamic>>(
-              widget.jsonThemesAddress!.map(_readAsset),
-            )
-          : widget.jsonThemes,
+      jsonLocales: resolvedJsonLocales,
+      jsonThemes: resolvedJsonThemes,
       initialLocale: savedLocale,
       initialTheme: savedTheme,
       themeChanged: _onThemeChanged,
@@ -452,38 +485,32 @@ class _UtilerScopeState extends State<UtilerScope> {
   Future<String?> _getSavedLocale() async =>
       (await _database.getSecure('locale'))?.value;
 
-  Future<ValuesAnimationType?> _getSavedThemeAnimation() async {
-    final value = (await _database.getSecure('theme_animation'))?.value;
-    if (value == null) return null;
-    return ValuesAnimationTypeX.parse(value, fallback: widget.themeAnimation);
+  String? _firstThemeId(List<Map<String, dynamic>>? resolvedJson) {
+    if (widget.themes != null && widget.themes!.isNotEmpty) {
+      return widget.themes!.first.id;
+    }
+    if (resolvedJson != null && resolvedJson.isNotEmpty) {
+      return resolvedJson.first.keys.first;
+    }
+    return null;
   }
 
-  Future<ValuesAnimationType?> _getSavedLocaleAnimation() async {
-    final value = (await _database.getSecure('locale_animation'))?.value;
-    if (value == null) return null;
-    return ValuesAnimationTypeX.parse(value, fallback: widget.localeAnimation);
+  String? _firstLocaleId(List<Map<String, dynamic>>? resolvedJson) {
+    if (widget.locales != null && widget.locales!.isNotEmpty) {
+      return widget.locales!.first.id;
+    }
+    if (resolvedJson != null && resolvedJson.isNotEmpty) {
+      return resolvedJson.first.keys.first;
+    }
+    return null;
   }
 
   Future<void> _persistThemeAnimation(ValuesAnimationType? animation) async {
     ValuesRuntime.themeAnimation = animation;
-    if (animation == null) {
-      await _database.deleteSecure('theme_animation');
-      return;
-    }
-    await _database.putSecure(
-      SecureDatabaseData(key: 'theme_animation', value: animation.name),
-    );
   }
 
   Future<void> _persistLocaleAnimation(ValuesAnimationType? animation) async {
     ValuesRuntime.localeAnimation = animation;
-    if (animation == null) {
-      await _database.deleteSecure('locale_animation');
-      return;
-    }
-    await _database.putSecure(
-      SecureDatabaseData(key: 'locale_animation', value: animation.name),
-    );
   }
 
   // ── assets ──────────────────────────────────────────────────────────────────

@@ -1,23 +1,19 @@
 import 'dart:async';
 
-import 'package:utiler/src/core/guard.dart';
+import 'package:utiler/src/core/async_guard.dart';
 
-/// Executes multiple asynchronous functions in parallel and collects results.
+/// Executes multiple asynchronous functions concurrently and collects results.
 ///
-/// The [ParallelExecutor] runs all provided async tasks concurrently using
-/// `Future.wait`. It supports two modes of result ordering:
+/// Each task is wrapped in [AsyncGuard] so errors are captured as `null`
+/// rather than breaking the execution of other tasks.
 ///
-/// - If [indexImportant] is `true`, results are stored in the same index
-///   as the input functions.
-/// - If `false`, results are stored in completion order using an internal
-///   counter.
-///
-/// Each operation is wrapped in [Guard] to prevent exceptions from breaking
-/// the execution of other tasks.
+/// When [indexImportant] is `true` (the default), results are stored at
+/// the same index as their input function.
+/// When `false`, results are stored in completion order.
 ///
 /// Example:
 /// ```dart
-/// final executor = ParallelExecutor(indexImportant: true);
+/// final executor = ParallelExecutor();
 ///
 /// final results = await executor.execute<String>([
 ///   () async => await fetchUser(),
@@ -25,47 +21,41 @@ import 'package:utiler/src/core/guard.dart';
 ///   () async => await fetchComments(),
 /// ]);
 ///
-/// print(results);
+/// print(results); // [user, posts, comments] in input order
 /// ```
 class ParallelExecutor {
   /// Creates a [ParallelExecutor].
   ///
-  /// If [indexImportant] is `true`, results preserve input order.
-  /// If `false`, results are stored based on completion order.
-  ParallelExecutor({required this.indexImportant});
+  /// Set [indexImportant] to `false` to store results in completion order
+  /// instead of input order.
+  const ParallelExecutor({this.indexImportant = true});
 
-  /// Whether result order should match input index order.
+  /// Whether results are placed at the same index as their input function.
+  ///
+  /// When `false`, the first task to complete occupies index `0`, and so on.
   final bool indexImportant;
 
-  /// Internal counter used when [indexImportant] is `false`.
-  int counter = 0;
-
-  /// Executes all [functions] concurrently and collects their results.
+  /// Executes all [functions] concurrently and returns their results.
   ///
-  /// Each function is executed in parallel and wrapped with [Guard] to
-  /// safely handle errors.
-  ///
-  /// Returns a list of results in either:
-  /// - input order (if [indexImportant] is true)
-  /// - completion order (if false)
+  /// Each function is wrapped in [AsyncGuard]; a failing task produces `null`
+  /// at its position without affecting the others.
   Future<List<T?>> execute<T>(List<Future<T> Function()> functions) async {
-    final List<T?> results = List.filled(functions.length, null);
-    final List<Future<T?>> futures = [];
+    final results = List<T?>.filled(functions.length, null);
+    var completionIndex = 0;
 
-    for (int i = 0; i < functions.length; i++) {
-      final future = Future.sync(() async {
-        final Function() operation = functions[i];
-        final T? result = await Guard()(() async => await operation());
-        if (indexImportant) {
-          results[i] = result;
-        } else {
-          results[counter] = result;
-        }
-        counter++;
-      });
-      futures.add(future);
-    }
-    await Future.wait(futures);
+    await Future.wait([
+      for (var i = 0; i < functions.length; i++)
+        () async {
+          final taskIndex = i;
+          final result = await AsyncGuard<T>()(() => functions[taskIndex]());
+          if (indexImportant) {
+            results[taskIndex] = result;
+          } else {
+            results[completionIndex++] = result;
+          }
+        }(),
+    ]);
+
     return results;
   }
 }

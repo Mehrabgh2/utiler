@@ -6,6 +6,9 @@
 /// Once initialized, the computed value is cached and reused for all
 /// subsequent accesses unless [reset] is called.
 ///
+/// Concurrent accesses before initialization completes all await the same
+/// underlying [Future], so [initializer] runs exactly once per lifecycle.
+///
 /// This is useful for:
 /// - deferred API calls
 /// - expensive async computations
@@ -17,10 +20,11 @@
 ///   return await loadConfigFromApi();
 /// });
 ///
-/// final value = await config.value;
-/// print(value);
+/// // Concurrent callers both await the same initialization:
+/// final a = config.value;
+/// final b = config.value; // does NOT run initializer again
 ///
-/// print(config.isInitilizaed); // true
+/// print(config.isInitialized); // true after awaiting
 ///
 /// config.reset(); // forces recomputation on next access
 /// ```
@@ -31,22 +35,34 @@ class LazyValue<T> {
   /// Function that produces the value when needed.
   final Future<T> Function() initializer;
 
-  T? _value;
+  Future<T>? _future;
   bool _isInitialized = false;
 
-  /// Whether the value has already been initialized.
-  bool get isInitilizaed => _isInitialized;
+  /// Whether the value has been successfully initialized.
+  ///
+  /// Returns `true` only after [initializer] completes without error.
+  bool get isInitialized => _isInitialized;
 
   /// Returns the computed value, initializing it if necessary.
   ///
-  /// The [initializer] is executed only once. After that, the cached
-  /// value is returned.
-  Future<T> get value async {
-    if (!_isInitialized) {
-      _value = await initializer();
+  /// Multiple concurrent calls all await the same [Future]; the
+  /// [initializer] runs exactly once. If initialization fails, the
+  /// error is propagated to all awaiting callers and the cache is
+  /// cleared so the next access retries from scratch.
+  Future<T> get value {
+    _future ??= _run();
+    return _future!;
+  }
+
+  Future<T> _run() async {
+    try {
+      final result = await initializer();
       _isInitialized = true;
+      return result;
+    } catch (e) {
+      _future = null;
+      rethrow;
     }
-    return _value!;
   }
 
   /// Resets the cached value.
@@ -54,7 +70,7 @@ class LazyValue<T> {
   /// After calling this, the next access to [value] will re-run the
   /// [initializer].
   void reset() {
+    _future = null;
     _isInitialized = false;
-    _value = null;
   }
 }

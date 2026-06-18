@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:utiler/src/database/json_database_data.dart';
 import 'package:utiler/src/logger/pretty_logger.dart';
 
@@ -43,21 +43,16 @@ class JsonDatabase {
 
   /// Initializes the database and opens the Hive box.
   ///
-  /// [storagePath] is required:
-  /// - mobile/desktop: absolute directory path from your app
-  /// - web: logical Hive prefix (e.g. `'utiler_hive'`)
-  ///
   /// If [logging] is true, internal operations and errors will be logged.
   ///
   /// This method must be called before any database operation.
-  Future<void> init({required String storagePath, bool logging = false}) async {
+  Future<void> init({bool logging = false}) async {
     _logging = logging;
-    _storagePath = storagePath;
     if (Hive.isBoxOpen(_boxName)) {
       _db = Hive.box<String>(_boxName);
     } else {
       try {
-        Hive.init(storagePath);
+        Hive.initFlutter();
         _db = await Hive.openBox<String>(_boxName);
 
         if (_logging) {
@@ -229,7 +224,7 @@ class JsonDatabase {
   /// Returns `true` if the database is ready, otherwise `false`.
   Future<bool> isInit() async {
     if (_db == null && _storagePath != null) {
-      await init(storagePath: _storagePath!, logging: _logging);
+      await init(logging: _logging);
     }
     return _db != null;
   }

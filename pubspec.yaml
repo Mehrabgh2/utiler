@@ -1,6 +1,6 @@
 name: utiler
 description: "Essential utility functions and helpers for Dart/Flutter projects. Simplify everyday coding with tools for common logic patterns. Developed by Mehrab Ghassab"
-version: 1.3.0
+version: 1.4.0
 homepage: https://github.com/Mehrabgh2/utiler
 repository: https://github.com/Mehrabgh2/utiler
 issue_tracker: https://github.com/Mehrabgh2/utiler/issues
@@ -11,6 +11,14 @@ topics:
   - localization
   - theming
   - api
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
 
 environment:
   sdk: ^3.8.1
@@ -24,6 +32,7 @@ dependencies:
   hive: ^2.2.3
   http: ^1.6.0
   path: ^1.9.1
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0

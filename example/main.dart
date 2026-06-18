@@ -17,6 +17,7 @@ void main() {
       enabledLog: true,
       exportLog: false,
       showLogWidget: true,
+      showPerformanceMonitor: true,
 
       /// ------------------------------------------------------------
       /// Typed theme & locale definitions

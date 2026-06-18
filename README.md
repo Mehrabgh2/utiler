@@ -46,7 +46,7 @@ void main() {
       // Logging
       enabledLog: true,
       exportLog: false,
-      showLogWidget: false,
+      showLogWidget: false, // dev-only: logger widget
       showPerformanceMonitor: false, // dev-only: live metrics overlay
 
       // Theming
@@ -496,12 +496,12 @@ LoggerConsole(
 
 A live glassmorphism overlay with nine real-time app metrics. All values are **app-only** — no native code required, works on all platforms.
 
-| Metric | Source |
-|---|---|
-| FPS, jank count, total frames | `SchedulerBinding` frame timings |
-| Build time, raster time, vsync overhead | `FrameTiming` |
-| GPU raster cache | `FrameTiming.layerCacheBytes` |
-| Memory (current & peak RSS) | `dart:io` `ProcessInfo` · N/A on web |
+| Metric                                  | Source                               |
+| --------------------------------------- | ------------------------------------ |
+| FPS, jank count, total frames           | `SchedulerBinding` frame timings     |
+| Build time, raster time, vsync overhead | `FrameTiming`                        |
+| GPU raster cache                        | `FrameTiming.layerCacheBytes`        |
+| Memory (current & peak RSS)             | `dart:io` `ProcessInfo` · N/A on web |
 
 Enable via `UtilerScope`:
 
@@ -514,8 +514,6 @@ Or wrap directly:
 ```dart
 PerformanceMonitor(child: const MyApp())
 ```
-
-When both `showLogWidget` and `showPerformanceMonitor` are enabled, the FABs sit side by side automatically.
 
 ---
 
@@ -652,18 +650,18 @@ Generates a ready-to-use structure inside `lib/features/`.
 
 Runnable demos for every module live in the `example/` folder:
 
-| Folder                 | Covers                                                                     |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `example/async/`       | Debouncer (+ flush), Throttler, Retry (+ callOrThrow, onError)             |
-| `example/concurrency/` | Batch & parallel executors                                                 |
+| Folder                 | Covers                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `example/async/`       | Debouncer (+ flush), Throttler, Retry (+ callOrThrow, onError)                                                |
+| `example/concurrency/` | Batch & parallel executors                                                                                    |
 | `example/core/`        | Either (+ map/flatMap), Guard, AsyncGuard, TimedCache, LazyValue, AppConfig, FeatureFlags, ConnectivityWidget |
-| `example/validation/`  | FormValidator (+ optional), AsyncFormValidator                             |
-| `example/database/`    | JSON & secure storage                                                      |
-| `example/extension/`   | String, num, list, map, DateTime helpers                                   |
-| `example/logger/`      | Logger, PrettyLogger, StopwatchLogger                                      |
-| `example/service/`     | ApiService                                                                 |
-| `example/ui/`          | Widgets and layout helpers                                                 |
-| `example/main.dart`    | UtilerScope demo (with PerformanceMonitor)                                 |
+| `example/validation/`  | FormValidator (+ optional), AsyncFormValidator                                                                |
+| `example/database/`    | JSON & secure storage                                                                                         |
+| `example/extension/`   | String, num, list, map, DateTime helpers                                                                      |
+| `example/logger/`      | Logger, PrettyLogger, StopwatchLogger                                                                         |
+| `example/service/`     | ApiService                                                                                                    |
+| `example/ui/`          | Widgets and layout helpers                                                                                    |
+| `example/main.dart`    | UtilerScope demo (with PerformanceMonitor)                                                                    |
 
 ---
 

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
+import 'package:utiler/src/database/hive_init_stub.dart'
+    if (dart.library.io) 'package:utiler/src/database/hive_init_io.dart';
 import 'package:utiler/src/database/json_database_data.dart';
 import 'package:utiler/src/logger/pretty_logger.dart';
 
@@ -43,16 +45,24 @@ class JsonDatabase {
 
   /// Initializes the database and opens the Hive box.
   ///
+  /// [storagePath] is the directory Hive uses to persist boxes on native
+  /// platforms (Android, iOS, macOS, Windows, Linux). On web and WASM it is
+  /// ignored — Hive uses IndexedDB automatically.
+  ///
+  /// If [storagePath] is omitted on native, `Directory.systemTemp` is used as
+  /// a fallback; pass the path returned by `path_provider` for production use.
+  ///
   /// If [logging] is true, internal operations and errors will be logged.
   ///
   /// This method must be called before any database operation.
-  Future<void> init({bool logging = false}) async {
+  Future<void> init({bool logging = false, String? storagePath}) async {
     _logging = logging;
+    if (storagePath != null) _storagePath = storagePath;
     if (Hive.isBoxOpen(_boxName)) {
       _db = Hive.box<String>(_boxName);
     } else {
       try {
-        Hive.initFlutter();
+        hiveInit(_storagePath);
         _db = await Hive.openBox<String>(_boxName);
 
         if (_logging) {

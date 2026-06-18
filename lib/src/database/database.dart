@@ -51,10 +51,15 @@ class Database {
   static final SecureDatabase _secureDb = SecureDatabase();
 
   /// Initializes secure storage and optionally the JSON database.
+  ///
+  /// [jsonStoragePath] sets the directory Hive uses on native platforms.
+  /// On web and WASM it is ignored. Pass the result of `getApplicationDocumentsDirectory()`
+  /// from `path_provider` for production use; omit to fall back to the system temp directory.
+  ///
   /// If [logging] is true, internal operations log their status and errors.
-  Future<void> init({bool logging = false}) async {
+  Future<void> init({bool logging = false, String? jsonStoragePath}) async {
     await _secureDb.init(logging);
-    await _jsonDb.init(logging: logging);
+    await _jsonDb.init(logging: logging, storagePath: jsonStoragePath);
   }
 
   // ---------------------------------------------------------------------------

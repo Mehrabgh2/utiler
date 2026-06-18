@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:utiler/src/database/database.dart';
 import 'package:utiler/src/database/json_database_data.dart';
@@ -30,7 +33,10 @@ class _DatabaseExamplesState extends State<DatabaseExamples> {
             ElevatedButton(
               onPressed: () async {
                 final db = Database();
-                await db.init(logging: true);
+                // On native, pass a writable directory (e.g. from path_provider).
+                // On web/WASM the storagePath is ignored.
+                final path = kIsWeb ? null : Directory.systemTemp.path;
+                await db.init(logging: true, jsonStoragePath: path);
 
                 await db.putJson(
                   JsonDatabaseData(key: 'settings', data: {'theme': 'dark'}),
@@ -44,7 +50,8 @@ class _DatabaseExamplesState extends State<DatabaseExamples> {
             ElevatedButton(
               onPressed: () async {
                 final db = Database();
-                await db.init(logging: true);
+                final path = kIsWeb ? null : Directory.systemTemp.path;
+                await db.init(logging: true, jsonStoragePath: path);
 
                 await db.putSecure(
                   SecureDatabaseData(key: 'token', value: 'secret_token_123'),
@@ -58,7 +65,8 @@ class _DatabaseExamplesState extends State<DatabaseExamples> {
             ElevatedButton(
               onPressed: () async {
                 final db = Database();
-                await db.init(logging: false);
+                final path = kIsWeb ? null : Directory.systemTemp.path;
+                await db.init(logging: false, jsonStoragePath: path);
                 await db.clearJson();
                 await db.clearSecure();
                 setState(() => _status = 'Cleared Json + Secure');

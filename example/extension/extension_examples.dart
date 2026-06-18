@@ -34,11 +34,7 @@ class ExtensionExamples extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           color: Colors.grey.shade200,
           child: Row(
-            children: [
-              const Text('Hello'),
-              16.h,
-              const Text('World'),
-            ],
+            children: [const Text('Hello'), 16.h, const Text('World')],
           ),
         ),
         const SizedBox(height: 12),
@@ -46,7 +42,9 @@ class ExtensionExamples extends StatelessWidget {
         const SizedBox(height: 8),
         Text('isToday: ${DateTime.now().isToday}'),
         const SizedBox(height: 8),
-        Text('isPast: ${DateTime.now().subtract(const Duration(days: 1)).isPast}'),
+        Text(
+          'isPast: ${DateTime.now().subtract(const Duration(days: 1)).isPast}',
+        ),
         const SizedBox(height: 8),
         Text(
           'timeAgo: ${DateTime.now().subtract(const Duration(hours: 3)).timeAgo}',
@@ -54,9 +52,7 @@ class ExtensionExamples extends StatelessWidget {
         const SizedBox(height: 8),
         Text('format: ${DateTime.now().format('yyyy/MM/dd')}'),
         const SizedBox(height: 8),
-        Text(
-          'isSameDay: ${DateTime.now().isSameDay(DateTime.now())}',
-        ),
+        Text('isSameDay: ${DateTime.now().isSameDay(DateTime.now())}'),
       ],
     );
   }

@@ -410,18 +410,16 @@ class _UtilerScopeState extends State<UtilerScope> {
     if (!hasThemes && !hasLocales) return finalChild;
 
     // Resolve JSON assets first so we can read their first key for seeding.
-    final resolvedJsonThemes =
-        hasThemes && widget.jsonThemesAddress != null
-            ? await Future.wait<Map<String, dynamic>>(
-                widget.jsonThemesAddress!.map(_readAsset),
-              )
-            : widget.jsonThemes;
-    final resolvedJsonLocales =
-        hasLocales && widget.jsonLocalesAddress != null
-            ? await Future.wait<Map<String, dynamic>>(
-                widget.jsonLocalesAddress!.map(_readAsset),
-              )
-            : widget.jsonLocales;
+    final resolvedJsonThemes = hasThemes && widget.jsonThemesAddress != null
+        ? await Future.wait<Map<String, dynamic>>(
+            widget.jsonThemesAddress!.map(_readAsset),
+          )
+        : widget.jsonThemes;
+    final resolvedJsonLocales = hasLocales && widget.jsonLocalesAddress != null
+        ? await Future.wait<Map<String, dynamic>>(
+            widget.jsonLocalesAddress!.map(_readAsset),
+          )
+        : widget.jsonLocales;
 
     final savedTheme = await _getSavedTheme();
     final savedLocale = await _getSavedLocale();
@@ -432,7 +430,9 @@ class _UtilerScopeState extends State<UtilerScope> {
     } else {
       final initial = _firstThemeId(resolvedJsonThemes);
       if (initial != null) {
-        await _database.putSecure(SecureDatabaseData(key: 'theme', value: initial));
+        await _database.putSecure(
+          SecureDatabaseData(key: 'theme', value: initial),
+        );
       }
     }
 
@@ -442,7 +442,9 @@ class _UtilerScopeState extends State<UtilerScope> {
     } else {
       final initial = _firstLocaleId(resolvedJsonLocales);
       if (initial != null) {
-        await _database.putSecure(SecureDatabaseData(key: 'locale', value: initial));
+        await _database.putSecure(
+          SecureDatabaseData(key: 'locale', value: initial),
+        );
       }
     }
 

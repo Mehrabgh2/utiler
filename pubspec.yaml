@@ -12,14 +12,6 @@ topics:
   - theming
   - api
 
-platforms:
-  android:
-  ios:
-  linux:
-  macos:
-  web:
-  windows:
-
 environment:
   sdk: ^3.8.1
   flutter: ">=1.17.0"
@@ -32,7 +24,6 @@ dependencies:
   hive: ^2.2.3
   http: ^1.6.0
   path: ^1.9.1
-  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0

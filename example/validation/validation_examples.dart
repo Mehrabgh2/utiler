@@ -20,14 +20,13 @@ class _ValidationExamplesState extends State<ValidationExamples> {
   String _asyncResult = 'Tap async validate to check';
   bool _asyncLoading = false;
 
-  final _asyncValidator = AsyncFormValidator()
-      .required()
-      .email()
-      .rule((value) async {
-        await Future.delayed(const Duration(milliseconds: 500));
-        // Simulate server check — "taken@example.com" is already taken
-        return value == 'taken@example.com' ? 'Email already in use' : null;
-      });
+  final _asyncValidator = AsyncFormValidator().required().email().rule((
+    value,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate server check — "taken@example.com" is already taken
+    return value == 'taken@example.com' ? 'Email already in use' : null;
+  });
 
   @override
   void dispose() {
@@ -73,7 +72,8 @@ class _ValidationExamplesState extends State<ValidationExamples> {
               TextFormField(
                 controller: _optionalController,
                 decoration: const InputDecoration(
-                  labelText: 'Website URL (optional — validated only if filled)',
+                  labelText:
+                      'Website URL (optional — validated only if filled)',
                   border: OutlineInputBorder(),
                 ),
                 validator: FormValidator().optional().url().build(),

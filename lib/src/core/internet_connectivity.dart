@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:utiler/src/core/connectivity_backend_web.dart'
+    if (dart.library.io) 'package:utiler/src/core/connectivity_backend_io.dart';
 import 'package:utiler/src/core/internet_lookup_web.dart'
     if (dart.library.io) 'package:utiler/src/core/internet_lookup_io.dart';
 
@@ -22,11 +23,12 @@ enum InternetStatus {
 
 /// A utility for monitoring and checking internet connectivity status.
 ///
-/// [InternetConnectivity] wraps [Connectivity] from `connectivity_plus`
-/// and adds:
+/// [InternetConnectivity] wraps a platform connectivity backend
+/// (`connectivity_plus` on native, the browser `navigator.onLine` API on
+/// web/WASM) and adds:
 /// - interpreted network status ([InternetStatus])
-/// - optional VPN detection
-/// - real internet reachability check via DNS lookup
+/// - optional VPN detection (native only)
+/// - real internet reachability check via DNS lookup (HTTP HEAD on web)
 ///
 /// It provides both:
 /// - a one-time status check ([currentStatus])
@@ -47,16 +49,14 @@ enum InternetStatus {
 class InternetConnectivity {
   InternetConnectivity._();
 
-  static final Connectivity _connectivity = Connectivity();
+  static final ConnectivityBackend _connectivity = ConnectivityBackend();
 
   static StreamController<InternetStatus>? _controller;
-  static StreamSubscription? _subscription;
+  static StreamSubscription<InternetStatus>? _subscription;
 
   /// Returns the current interpreted network status.
-  static Future<InternetStatus> get currentStatus async {
-    final result = await _connectivity.checkConnectivity();
-    return _mapResult(result);
-  }
+  static Future<InternetStatus> get currentStatus =>
+      _connectivity.checkConnectivity();
 
   /// Stream of network status updates.
   ///
@@ -64,8 +64,8 @@ class InternetConnectivity {
   static Stream<InternetStatus> get onStatusChange {
     _controller ??= StreamController<InternetStatus>.broadcast();
 
-    _subscription ??= _connectivity.onConnectivityChanged.listen((result) {
-      _controller?.add(_mapResult(result));
+    _subscription ??= _connectivity.onConnectivityChanged.listen((status) {
+      _controller?.add(status);
     });
 
     return _controller!.stream;
@@ -82,29 +82,6 @@ class InternetConnectivity {
     } catch (_) {
       return false;
     }
-  }
-
-  /// Maps raw [ConnectivityResult] values into [InternetStatus].
-  static InternetStatus _mapResult(List<ConnectivityResult> results) {
-    if (results.isEmpty || results.contains(ConnectivityResult.none)) {
-      return InternetStatus.disconnected;
-    }
-    final hasVpn = results.contains(ConnectivityResult.vpn);
-    if (hasVpn) {
-      return InternetStatus.vpn;
-    }
-
-    final hasConnection = results.any(
-      (r) =>
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.ethernet,
-    );
-
-    if (hasConnection) {
-      return InternetStatus.connected;
-    }
-    return InternetStatus.disconnected;
   }
 
   /// Cleans up internal stream resources.

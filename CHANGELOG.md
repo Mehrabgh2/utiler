@@ -1,3 +1,9 @@
+## 1.4.1
+
+### Fixed
+
+- Fix Web support problem
+
 ## 1.4.0
 
 ### Added

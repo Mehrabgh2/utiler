@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:utiler/src/database/hive_init_stub.dart'
     if (dart.library.io) 'package:utiler/src/database/hive_init_io.dart';
 import 'package:utiler/src/database/json_database_data.dart';

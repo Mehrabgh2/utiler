@@ -78,9 +78,8 @@ extension ThemeExtension on BuildContext {
   /// Returns all available typed themes.
   List<ThemeValues>? get allThemes => ThemeScope.getAllThemes(this);
 
-  /// Returns all available JSON-based themes.
-  List<Map<String, dynamic>>? get allJsonThemes =>
-      ThemeJsonScope.getAllThemes(this);
+  /// Returns all available JSON-based themes keyed by theme id.
+  Map<String, dynamic>? get allJsonThemes => ThemeJsonScope.getAllThemes(this);
 }
 
 /// Extension on [String] to resolve theme colors from JSON theme maps.

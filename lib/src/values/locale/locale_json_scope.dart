@@ -21,10 +21,10 @@ import 'package:utiler/src/values/values_runtime.dart';
 /// ```dart
 /// LocaleJsonScope(
 ///   initialLocale: 'en',
-///   locales: [
-///     {'en': {...}},
-///     {'fa': {...}},
-///   ],
+///   locales: {
+///     'en': {...},
+///     'fa': {...},
+///   },
 ///   child: MyApp(),
 /// )
 /// ```
@@ -33,7 +33,7 @@ class LocaleJsonScope extends StatefulWidget {
   const LocaleJsonScope({
     required this.child,
     required this.initialLocale,
-    this.locales = const [],
+    this.locales = const {},
     this.localeChanged,
     this.animation,
     this.animationDuration = const Duration(milliseconds: 500),
@@ -47,8 +47,9 @@ class LocaleJsonScope extends StatefulWidget {
   /// The initially selected locale ID.
   final String initialLocale;
 
-  /// List of all available locale maps.
-  final List<Map<String, dynamic>> locales;
+  /// Available JSON locales keyed by locale id, e.g.
+  /// `{'en': {...}, 'fa': {...}}`.
+  final Map<String, dynamic> locales;
 
   /// Optional callback triggered when locale changes.
   final Function(String)? localeChanged;
@@ -105,8 +106,8 @@ class LocaleJsonScope extends StatefulWidget {
     return LocaleJsonManager.of(context)?.currentLocale;
   }
 
-  /// Returns all available locales from the nearest scope.
-  static List<Map<String, dynamic>>? getAllLocales(BuildContext context) {
+  /// Returns all available JSON locales keyed by locale id.
+  static Map<String, dynamic>? getAllLocales(BuildContext context) {
     return LocaleJsonManager.of(context)?.locales;
   }
 
@@ -119,8 +120,14 @@ class LocaleJsonScope extends StatefulWidget {
 /// Handles locale initialization and updates using [setState].
 class _LocaleJsonScope extends State<LocaleJsonScope>
     with SingleTickerProviderStateMixin {
-  /// Currently active locale map.
+  /// Currently active locale as a single-entry map (`{id: values}`).
   late Map<String, dynamic> _currentLocale;
+
+  /// Available locales as single-entry maps, derived from [widget.locales].
+  ///
+  /// Each entry keeps a stable identity so the animation model can compare
+  /// resolved locales by reference.
+  late final List<Map<String, dynamic>> _localeEntries;
 
   /// Drives the animated reveal transition.
   late AnimationController _animationController;
@@ -132,10 +139,14 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
   void initState() {
     super.initState();
 
+    _localeEntries = widget.locales.entries
+        .map((entry) => <String, dynamic>{entry.key: entry.value})
+        .toList();
+
     final effectiveLocaleId =
         ValuesRuntime.currentLocaleId ?? widget.initialLocale;
 
-    int index = widget.locales.indexWhere(
+    int index = _localeEntries.indexWhere(
       (element) => element.keys.first == effectiveLocaleId,
     );
 
@@ -143,7 +154,7 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
       index = 0;
     }
 
-    _currentLocale = widget.locales[index];
+    _currentLocale = _localeEntries[index];
     ValuesRuntime.currentLocaleId = _currentLocale.keys.first;
 
     _animationController = AnimationController(
@@ -160,10 +171,10 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
       fixedDuration: widget.animationDuration,
       getCurrentLocale: () => _currentLocale,
       resolveLocale: (id) {
-        final index = widget.locales.indexWhere(
+        final index = _localeEntries.indexWhere(
           (element) => element.keys.first == id,
         );
-        return index == -1 ? null : widget.locales[index];
+        return index == -1 ? null : _localeEntries[index];
       },
       applyLocale: _applyLocale,
       wrapLocaledChild: (locale, child) => LocaleJsonManager(
@@ -197,14 +208,14 @@ class _LocaleJsonScope extends State<LocaleJsonScope>
 
   /// Updates the active locale by its ID.
   void _applyLocale(String id) {
-    final index = widget.locales.indexWhere(
+    final index = _localeEntries.indexWhere(
       (element) => element.keys.first == id,
     );
 
     if (index != -1) {
       ValuesRuntime.currentLocaleId = id;
       setState(() {
-        _currentLocale = widget.locales[index];
+        _currentLocale = _localeEntries[index];
 
         if (widget.localeChanged != null) {
           widget.localeChanged!(id);

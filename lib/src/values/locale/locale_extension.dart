@@ -85,8 +85,8 @@ extension LocaleExtension on BuildContext {
   /// Returns all available typed locales.
   List<LocaleValues>? get allLocales => LocaleScope.getAllLocales(this);
 
-  /// Returns all available JSON locales.
-  List<Map<String, dynamic>>? get allJsonLocales =>
+  /// Returns all available JSON locales keyed by locale id.
+  Map<String, dynamic>? get allJsonLocales =>
       LocaleJsonScope.getAllLocales(this);
 }
 

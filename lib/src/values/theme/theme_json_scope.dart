@@ -21,10 +21,10 @@ import 'package:utiler/src/values/values_runtime.dart';
 /// ```dart
 /// ThemeJsonScope(
 ///   initialTheme: 'light',
-///   themes: [
-///     {'light': {...}},
-///     {'dark': {...}},
-///   ],
+///   themes: {
+///     'light': {...},
+///     'dark': {...},
+///   },
 ///   child: MyApp(),
 /// )
 /// ```
@@ -33,7 +33,7 @@ class ThemeJsonScope extends StatefulWidget {
   const ThemeJsonScope({
     required this.child,
     required this.initialTheme,
-    this.themes = const [],
+    this.themes = const {},
     this.themeChanged,
     this.animation,
     this.animationDuration = const Duration(milliseconds: 500),
@@ -47,8 +47,9 @@ class ThemeJsonScope extends StatefulWidget {
   /// The initial theme identifier (e.g. `"light"`, `"dark"`).
   final String initialTheme;
 
-  /// List of available JSON theme maps.
-  final List<Map<String, dynamic>> themes;
+  /// Available JSON themes keyed by theme id, e.g.
+  /// `{'light': {...}, 'dark': {...}}`.
+  final Map<String, dynamic> themes;
 
   /// Optional callback triggered when theme changes.
   final Function(String)? themeChanged;
@@ -101,8 +102,8 @@ class ThemeJsonScope extends StatefulWidget {
     return ThemeJsonManager.of(context)?.currentTheme;
   }
 
-  /// Returns all available JSON themes.
-  static List<Map<String, dynamic>>? getAllThemes(BuildContext context) {
+  /// Returns all available JSON themes keyed by theme id.
+  static Map<String, dynamic>? getAllThemes(BuildContext context) {
     return ThemeJsonManager.of(context)?.themes;
   }
 
@@ -115,8 +116,14 @@ class ThemeJsonScope extends StatefulWidget {
 /// Handles initialization and switching of JSON themes.
 class _ThemeJsonScope extends State<ThemeJsonScope>
     with SingleTickerProviderStateMixin {
-  /// Currently active theme map.
+  /// Currently active theme as a single-entry map (`{id: values}`).
   late Map<String, dynamic> _currentTheme;
+
+  /// Available themes as single-entry maps, derived from [widget.themes].
+  ///
+  /// Each entry keeps a stable identity so the animation model can compare
+  /// resolved themes by reference.
+  late final List<Map<String, dynamic>> _themeEntries;
 
   /// Drives the animated reveal transition.
   late AnimationController _animationController;
@@ -128,10 +135,14 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
   void initState() {
     super.initState();
 
+    _themeEntries = widget.themes.entries
+        .map((entry) => <String, dynamic>{entry.key: entry.value})
+        .toList();
+
     final effectiveThemeId =
         ValuesRuntime.currentThemeId ?? widget.initialTheme;
 
-    int index = widget.themes.indexWhere(
+    int index = _themeEntries.indexWhere(
       (element) => element.keys.first == effectiveThemeId,
     );
 
@@ -139,7 +150,7 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
       index = 0;
     }
 
-    _currentTheme = widget.themes[index];
+    _currentTheme = _themeEntries[index];
     ValuesRuntime.currentThemeId = _currentTheme.keys.first;
 
     _animationController = AnimationController(
@@ -156,10 +167,10 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
       fixedDuration: widget.animationDuration,
       getCurrentTheme: () => _currentTheme,
       resolveTheme: (id) {
-        final index = widget.themes.indexWhere(
+        final index = _themeEntries.indexWhere(
           (element) => element.keys.first == id,
         );
-        return index == -1 ? null : widget.themes[index];
+        return index == -1 ? null : _themeEntries[index];
       },
       applyTheme: _applyTheme,
       wrapThemedChild: (theme, child) => ThemeJsonManager(
@@ -193,14 +204,14 @@ class _ThemeJsonScope extends State<ThemeJsonScope>
 
   /// Updates the active theme by its ID.
   void _applyTheme(String id) {
-    final index = widget.themes.indexWhere(
+    final index = _themeEntries.indexWhere(
       (element) => element.keys.first == id,
     );
 
     if (index != -1) {
       ValuesRuntime.currentThemeId = id;
       setState(() {
-        _currentTheme = widget.themes[index];
+        _currentTheme = _themeEntries[index];
 
         if (widget.themeChanged != null) {
           widget.themeChanged!(id);

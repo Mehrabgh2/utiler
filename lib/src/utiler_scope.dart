@@ -43,8 +43,8 @@ import 'package:utiler/src/values/values_scope.dart';
 /// ### Theming
 ///
 /// Supports typed ([ThemeValues]) or JSON-based themes. JSON files can be
-/// passed directly via [jsonThemes] or loaded from assets via
-/// [jsonThemesAddress].
+/// passed directly via [jsonThemes] or loaded from an asset directory via
+/// [jsonThemesAddress] (every `.json` file under that directory is loaded).
 ///
 /// Theme switching is animated when called via [Utiler.changeAppTheme].
 /// The default transition style is set with [themeAnimation] and its duration
@@ -63,8 +63,8 @@ import 'package:utiler/src/values/values_scope.dart';
 /// ### Localization
 ///
 /// Supports typed ([LocaleValues]) or JSON-based locales. JSON files can be
-/// passed directly via [jsonLocales] or loaded from assets via
-/// [jsonLocalesAddress].
+/// passed directly via [jsonLocales] or loaded from an asset directory via
+/// [jsonLocalesAddress] (every `.json` file under that directory is loaded).
 ///
 /// Locale switching is animated when called via [Utiler.changeAppLocale].
 /// The default transition style is set with [localeAnimation] and its duration
@@ -208,23 +208,35 @@ class UtilerScope extends StatefulWidget {
   /// [jsonThemesAddress].
   final List<ThemeValues>? themes;
 
-  /// JSON-based theme definitions. Mutually exclusive with [themes].
-  final List<Map<String, dynamic>>? jsonThemes;
+  /// JSON-based theme definitions keyed by theme id, e.g.
+  /// `{'light': {...}, 'dark': {...}}`. Mutually exclusive with [themes].
+  final Map<String, dynamic>? jsonThemes;
 
-  /// Asset paths for JSON theme files. Loaded and merged at startup.
-  /// Mutually exclusive with [themes].
-  final List<String>? jsonThemesAddress;
+  /// Asset directory containing JSON theme files. Every `.json` file directly
+  /// or recursively under this directory is loaded and merged at startup,
+  /// sorted by asset path. Mutually exclusive with [themes].
+  ///
+  /// ```dart
+  /// jsonThemesAddress: 'assets/theme',
+  /// ```
+  final String? jsonThemesAddress;
 
   /// Typed locale definitions. Mutually exclusive with [jsonLocales] and
   /// [jsonLocalesAddress].
   final List<LocaleValues>? locales;
 
-  /// JSON-based locale definitions. Mutually exclusive with [locales].
-  final List<Map<String, dynamic>>? jsonLocales;
+  /// JSON-based locale definitions keyed by locale id, e.g.
+  /// `{'en': {...}, 'fa': {...}}`. Mutually exclusive with [locales].
+  final Map<String, dynamic>? jsonLocales;
 
-  /// Asset paths for JSON locale files. Loaded and merged at startup.
-  /// Mutually exclusive with [locales].
-  final List<String>? jsonLocalesAddress;
+  /// Asset directory containing JSON locale files. Every `.json` file directly
+  /// or recursively under this directory is loaded and merged at startup,
+  /// sorted by asset path. Mutually exclusive with [locales].
+  ///
+  /// ```dart
+  /// jsonLocalesAddress: 'assets/locale',
+  /// ```
+  final String? jsonLocalesAddress;
 
   /// Default theme transition applied when [Utiler.changeAppTheme] is called
   /// without an explicit animation argument. `null` means instant.
@@ -411,14 +423,10 @@ class _UtilerScopeState extends State<UtilerScope> {
 
     // Resolve JSON assets first so we can read their first key for seeding.
     final resolvedJsonThemes = hasThemes && widget.jsonThemesAddress != null
-        ? await Future.wait<Map<String, dynamic>>(
-            widget.jsonThemesAddress!.map(_readAsset),
-          )
+        ? await _readAssetDirectory(widget.jsonThemesAddress!)
         : widget.jsonThemes;
     final resolvedJsonLocales = hasLocales && widget.jsonLocalesAddress != null
-        ? await Future.wait<Map<String, dynamic>>(
-            widget.jsonLocalesAddress!.map(_readAsset),
-          )
+        ? await _readAssetDirectory(widget.jsonLocalesAddress!)
         : widget.jsonLocales;
 
     final savedTheme = await _getSavedTheme();
@@ -487,22 +495,22 @@ class _UtilerScopeState extends State<UtilerScope> {
   Future<String?> _getSavedLocale() async =>
       (await _database.getSecure('locale'))?.value;
 
-  String? _firstThemeId(List<Map<String, dynamic>>? resolvedJson) {
+  String? _firstThemeId(Map<String, dynamic>? resolvedJson) {
     if (widget.themes != null && widget.themes!.isNotEmpty) {
       return widget.themes!.first.id;
     }
     if (resolvedJson != null && resolvedJson.isNotEmpty) {
-      return resolvedJson.first.keys.first;
+      return resolvedJson.keys.first;
     }
     return null;
   }
 
-  String? _firstLocaleId(List<Map<String, dynamic>>? resolvedJson) {
+  String? _firstLocaleId(Map<String, dynamic>? resolvedJson) {
     if (widget.locales != null && widget.locales!.isNotEmpty) {
       return widget.locales!.first.id;
     }
     if (resolvedJson != null && resolvedJson.isNotEmpty) {
-      return resolvedJson.first.keys.first;
+      return resolvedJson.keys.first;
     }
     return null;
   }
@@ -515,7 +523,28 @@ class _UtilerScopeState extends State<UtilerScope> {
     ValuesRuntime.localeAnimation = animation;
   }
 
-  // ── assets ──────────────────────────────────────────────────────────────────
+  /// Loads every `.json` asset under [directory] (sorted by path) and merges
+  /// them into a single map keyed by each file's name without extension, e.g.
+  /// `{'light': {...}, 'dark': {...}}`.
+  ///
+  /// The asset list is resolved from the [AssetManifest], so it works across
+  /// all platforms including web and wasm.
+  Future<Map<String, dynamic>> _readAssetDirectory(String directory) async {
+    final normalized = directory.endsWith('/') ? directory : '$directory/';
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final paths =
+        manifest
+            .listAssets()
+            .where(
+              (asset) =>
+                  asset.startsWith(normalized) &&
+                  asset.toLowerCase().endsWith('.json'),
+            )
+            .toList()
+          ..sort();
+    final entries = await Future.wait(paths.map(_readAsset));
+    return {for (final entry in entries) ...entry};
+  }
 
   /// Reads a JSON asset file and returns it keyed by its filename (no ext).
   Future<Map<String, dynamic>> _readAsset(String address) async {

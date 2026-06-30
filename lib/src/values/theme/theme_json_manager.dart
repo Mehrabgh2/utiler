@@ -15,7 +15,7 @@ import 'package:utiler/src/values/theme/theme_values.dart';
 /// ```dart
 /// ThemeJsonManager(
 ///   themes: themes,
-///   currentTheme: themes.first,
+///   currentTheme: {'light': themes['light']},
 ///   changeAppTheme: (id) {},
 ///   child: MyApp(),
 /// )
@@ -30,10 +30,11 @@ class ThemeJsonManager extends InheritedWidget {
     required this.changeAppTheme,
   });
 
-  /// All available themes as JSON maps.
-  final List<Map<String, dynamic>> themes;
+  /// All available themes keyed by theme id, e.g.
+  /// `{'light': {...}, 'dark': {...}}`.
+  final Map<String, dynamic> themes;
 
-  /// The currently active theme map.
+  /// The currently active theme as a single-entry map (`{id: values}`).
   final Map<String, dynamic> currentTheme;
 
   /// Callback used to switch theme by identifier.

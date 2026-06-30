@@ -61,8 +61,8 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Typed locale definitions.
   final List<L>? locales;
 
-  /// JSON-based locale definitions.
-  final List<Map<String, dynamic>>? jsonLocales;
+  /// JSON-based locale definitions keyed by locale id.
+  final Map<String, dynamic>? jsonLocales;
 
   /// Initial locale identifier.
   final String? initialLocale;
@@ -70,8 +70,8 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
   /// Typed theme definitions.
   final List<T>? themes;
 
-  /// JSON-based theme definitions.
-  final List<Map<String, dynamic>>? jsonThemes;
+  /// JSON-based theme definitions keyed by theme id.
+  final Map<String, dynamic>? jsonThemes;
 
   /// Initial theme identifier.
   final String? initialTheme;
@@ -133,11 +133,11 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
       final effectiveThemeId =
           ValuesRuntime.currentThemeId ??
           initialTheme ??
-          (isJsonTheme ? jsonThemes!.first.keys.first : themes!.first.id);
+          (isJsonTheme ? jsonThemes!.keys.first : themes!.first.id);
       final effectiveLocaleId =
           ValuesRuntime.currentLocaleId ??
           initialLocale ??
-          (isJsonLocale ? jsonLocales!.first.keys.first : locales!.first.id);
+          (isJsonLocale ? jsonLocales!.keys.first : locales!.first.id);
 
       final switchingChild = CombinedSwitchingArea(child: child);
 
@@ -192,7 +192,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     } else if (jsonLocales != null) {
       return LocaleJsonScope(
         locales: jsonLocales!,
-        initialLocale: initialLocale ?? jsonLocales!.first.keys.first,
+        initialLocale: initialLocale ?? jsonLocales!.keys.first,
         localeChanged: localeChanged,
         animation: localeAnimation,
         animationDuration: localeAnimationDuration,
@@ -210,7 +210,7 @@ class ValuesScope<T extends ThemeValues, L extends LocaleValues>
     } else if (jsonThemes != null) {
       return ThemeJsonScope(
         themes: jsonThemes!,
-        initialTheme: initialTheme ?? jsonThemes!.first.keys.first,
+        initialTheme: initialTheme ?? jsonThemes!.keys.first,
         themeChanged: themeChanged,
         animation: themeAnimation,
         animationDuration: themeAnimationDuration,

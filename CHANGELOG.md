@@ -1,3 +1,14 @@
+## 1.4.3
+
+### Added
+
+- `Utiler.allThemes`, `Utiler.allJsonThemes`, `Utiler.allLocales`, `Utiler.allJsonLocales` — global access to all configured themes/locales.
+
+### Changed
+
+- **Breaking:** `jsonThemes` / `jsonLocales` now take a single map (`{'en': {...}, 'fa': {...}}`) instead of a list of single-key maps.
+- **Breaking:** `jsonThemesAddress` / `jsonLocalesAddress` now take a single asset directory path; every `.json` file under it is loaded.
+
 ## 1.4.2
 
 ### Fixed

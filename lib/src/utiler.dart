@@ -4,7 +4,9 @@ import 'package:utiler/src/core/feature_flags.dart';
 import 'package:utiler/src/utiler_scope.dart';
 import 'package:utiler/src/values/animation/values_animation_type.dart';
 import 'package:utiler/src/values/locale/locale_extension.dart';
+import 'package:utiler/src/values/locale/locale_values.dart';
 import 'package:utiler/src/values/theme/theme_extension.dart';
+import 'package:utiler/src/values/theme/theme_values.dart';
 import 'package:utiler/src/values/values_runtime.dart';
 
 /// Static entry point for all Utiler runtime APIs.
@@ -124,6 +126,19 @@ abstract final class Utiler {
   /// Returns `null` if no theme is active.
   static String? get currentThemeId => themeContext?.currentThemeId;
 
+  /// Returns all available typed themes.
+  ///
+  /// Returns `null` when typed themes are not in use (e.g. JSON themes) or
+  /// before [UtilerScope] is mounted.
+  static List<ThemeValues>? get allThemes => themeContext?.allThemes;
+
+  /// Returns all available JSON themes keyed by theme id, e.g.
+  /// `{'light': {...}, 'dark': {...}}`.
+  ///
+  /// Returns `null` when JSON themes are not in use or before [UtilerScope]
+  /// is mounted.
+  static Map<String, dynamic>? get allJsonThemes => themeContext?.allJsonThemes;
+
   /// Changes the global theme at runtime.
   ///
   /// Animation priority: [animation] → default from [UtilerScope.themeAnimation] → instant.
@@ -164,6 +179,20 @@ abstract final class Utiler {
   ///
   /// Returns `null` if no locale is active.
   static String? get currentLocaleId => localeContext?.currentLocaleId;
+
+  /// Returns all available typed locales.
+  ///
+  /// Returns `null` when typed locales are not in use (e.g. JSON locales) or
+  /// before [UtilerScope] is mounted.
+  static List<LocaleValues>? get allLocales => localeContext?.allLocales;
+
+  /// Returns all available JSON locales keyed by locale id, e.g.
+  /// `{'en': {...}, 'fa': {...}}`.
+  ///
+  /// Returns `null` when JSON locales are not in use or before [UtilerScope]
+  /// is mounted.
+  static Map<String, dynamic>? get allJsonLocales =>
+      localeContext?.allJsonLocales;
 
   /// Changes the global locale at runtime.
   ///

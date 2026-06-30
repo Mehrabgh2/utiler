@@ -15,7 +15,7 @@ import 'package:utiler/src/utiler.dart';
 /// ```dart
 /// LocaleJsonManager(
 ///   locales: locales,
-///   currentLocale: locales.first,
+///   currentLocale: {'en': locales['en']},
 ///   changeAppLocale: (id) {},
 ///   child: MyApp(),
 /// )
@@ -30,10 +30,11 @@ class LocaleJsonManager extends InheritedWidget {
     required this.changeAppLocale,
   });
 
-  /// All available localization maps.
-  final List<Map<String, dynamic>> locales;
+  /// All available locales keyed by locale id, e.g.
+  /// `{'en': {...}, 'fa': {...}}`.
+  final Map<String, dynamic> locales;
 
-  /// The currently active locale map.
+  /// The currently active locale as a single-entry map (`{id: values}`).
   final Map<String, dynamic> currentLocale;
 
   /// Callback used to switch the active locale by its identifier.

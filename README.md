@@ -49,19 +49,13 @@ void main() {
       showLogWidget: false, // dev-only: logger widget
       showPerformanceMonitor: false, // dev-only: live metrics overlay
 
-      // Theming
-      jsonThemesAddress: const [
-        'assets/theme/light.json',
-        'assets/theme/dark.json',
-      ],
+      // Theming — loads every .json file under the directory
+      jsonThemesAddress: 'assets/theme',
       themeAnimation: ValuesAnimationType.circle,
       themeAnimationDuration: Duration(milliseconds: 400),
 
-      // Localization
-      jsonLocalesAddress: const [
-        'assets/locale/en.json',
-        'assets/locale/fa.json',
-      ],
+      // Localization — loads every .json file under the directory
+      jsonLocalesAddress: 'assets/locale',
       localeAnimation: ValuesAnimationType.blurReveal,
       localeAnimationDuration: Duration(milliseconds: 400),
 
@@ -134,6 +128,12 @@ context.appJsonTheme;
 context.appJsonLocale;
 'home.background'.cr;  // color from JSON theme
 'home.appbar'.tr;      // localized string
+
+// All available values (typed lists, or JSON maps keyed by id)
+Utiler.allThemes;       // List<ThemeValues>?
+Utiler.allJsonThemes;   // {'light': {...}, 'dark': {...}}
+Utiler.allLocales;      // List<LocaleValues>?
+Utiler.allJsonLocales;  // {'en': {...}, 'fa': {...}}
 ```
 
 ### Access App Config

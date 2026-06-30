@@ -39,48 +39,36 @@ void main() {
       /// NOTE:
       /// Do NOT mix typed + JSON for same type in real usage.
       /// ------------------------------------------------------------
-      jsonThemes: [
-        {
-          'light': {
-            'home': {'background': const Color(0xFF1565C0)},
-            'profile': {'background': const Color(0xFF1565C0)},
-          },
+      jsonThemes: {
+        'light': {
+          'home': {'background': const Color(0xFF1565C0)},
+          'profile': {'background': const Color(0xFF1565C0)},
         },
-        {
-          'dark': {
-            'home': {'background': const Color(0xFF263238)},
-            'profile': {'background': const Color(0xFF263238)},
-          },
+        'dark': {
+          'home': {'background': const Color(0xFF263238)},
+          'profile': {'background': const Color(0xFF263238)},
         },
-      ],
+      },
 
-      jsonThemesAddress: const [
-        'assets/theme/light.json',
-        'assets/theme/dark.json',
-      ],
+      /// Loads every `.json` file under the directory.
+      jsonThemesAddress: 'assets/theme',
 
       /// ------------------------------------------------------------
       /// JSON-based localization
       /// ------------------------------------------------------------
-      jsonLocales: [
-        {
-          'en': {
-            'home': {'appbar': 'Home Screen'},
-            'profile': {'appbar': 'Profile Screen'},
-          },
+      jsonLocales: {
+        'en': {
+          'home': {'appbar': 'Home Screen'},
+          'profile': {'appbar': 'Profile Screen'},
         },
-        {
-          'fa': {
-            'home': {'appbar': 'صفحه اصلی'},
-            'profile': {'appbar': 'صفحه پروفایل'},
-          },
+        'fa': {
+          'home': {'appbar': 'صفحه اصلی'},
+          'profile': {'appbar': 'صفحه پروفایل'},
         },
-      ],
+      },
 
-      jsonLocalesAddress: const [
-        'assets/locale/fa.json',
-        'assets/locale/en.json',
-      ],
+      /// Loads every `.json` file under the directory.
+      jsonLocalesAddress: 'assets/locale',
 
       /// ------------------------------------------------------------
       /// Transition animations for theme & locale switching

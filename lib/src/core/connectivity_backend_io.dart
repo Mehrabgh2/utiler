@@ -1,4 +1,4 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:utiler/src/core/internet_connectivity.dart';
 
 /// IO/native connectivity backend backed by `package:connectivity_plus`.
@@ -7,20 +7,15 @@ import 'package:utiler/src/core/internet_connectivity.dart';
 /// `connectivity_plus` dependency (and its transitive `dart:io` usage) never
 /// reaches a web/WASM build.
 class ConnectivityBackend {
-  /// Creates a backend wrapping a [Connectivity] instance.
-  ConnectivityBackend() : _connectivity = Connectivity();
-
-  final Connectivity _connectivity;
-
   /// Returns the current interpreted network status.
   Future<InternetStatus> checkConnectivity() async {
-    final result = await _connectivity.checkConnectivity();
+    final result = await ConnectivityPlatform.instance.checkConnectivity();
     return _mapResult(result);
   }
 
   /// Stream of interpreted network status changes.
   Stream<InternetStatus> get onConnectivityChanged =>
-      _connectivity.onConnectivityChanged.map(_mapResult);
+      ConnectivityPlatform.instance.onConnectivityChanged.map(_mapResult);
 
   /// Maps raw [ConnectivityResult] values into [InternetStatus].
   InternetStatus _mapResult(List<ConnectivityResult> results) {

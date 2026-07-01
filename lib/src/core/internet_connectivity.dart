@@ -1,9 +1,11 @@
 import 'dart:async';
 
-import 'package:utiler/src/core/connectivity_backend_web.dart'
-    if (dart.library.io) 'package:utiler/src/core/connectivity_backend_io.dart';
-import 'package:utiler/src/core/internet_lookup_web.dart'
-    if (dart.library.io) 'package:utiler/src/core/internet_lookup_io.dart';
+import 'package:utiler/src/core/connectivity_backend_stub.dart'
+    if (dart.library.io) 'package:utiler/src/core/connectivity_backend_io.dart'
+    if (dart.library.js_interop) 'package:utiler/src/core/connectivity_backend_web.dart';
+import 'package:utiler/src/core/internet_lookup_stub.dart'
+    if (dart.library.io) 'package:utiler/src/core/internet_lookup_io.dart'
+    if (dart.library.js_interop) 'package:utiler/src/core/internet_lookup_web.dart';
 
 /// Represents the current interpreted internet state of the device.
 ///

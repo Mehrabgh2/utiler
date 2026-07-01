@@ -1,3 +1,9 @@
+## 1.4.4
+
+### Fixed
+
+- Fix platform support detection
+
 ## 1.4.3
 
 ### Added

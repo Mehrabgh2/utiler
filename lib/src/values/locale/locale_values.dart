@@ -15,6 +15,9 @@
 /// }
 /// ```
 abstract class LocaleValues {
+  /// Constructor for subclasses.
+  LocaleValues();
+
   /// Unique identifier for the locale (e.g. `"en"`, `"fa"`).
   abstract String id;
 }

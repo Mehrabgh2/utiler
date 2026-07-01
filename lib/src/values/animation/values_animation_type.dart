@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Built-in transition styles for theme and locale switching.
 ///
-/// Pass a [ValuesAnimationType] to [ThemeScope.changeAppTheme],
-/// [LocaleScope.changeAppLocale], or the `animation` parameters on
-/// [ValuesScope], [UtilerScope], and [BuildContext] extension methods.
+/// Pass a [ValuesAnimationType] to `ThemeScope.changeAppTheme`,
+/// `LocaleScope.changeAppLocale`, or the `animation` parameters on
+/// `ValuesScope`, [UtilerScope], and [BuildContext] extension methods.
 ///
 /// Animation resolution priority (theme and locale):
 /// 1. Per-call [ValuesAnimationType] argument
-/// 2. [ValuesRuntime.themeAnimation] / [ValuesRuntime.localeAnimation]
+/// 2. `ValuesRuntime.themeAnimation` / `ValuesRuntime.localeAnimation`
 ///    (set by [UtilerScope] or scope widgets)
 /// 3. Instant switch when both are `null`
 ///
@@ -63,7 +63,7 @@ enum ValuesAnimationType {
 
 /// Helpers for [ValuesAnimationType].
 ///
-/// Provides transition metadata used by [ValuesTransitionBuilder].
+/// Provides transition metadata used by `ValuesTransitionBuilder`.
 extension ValuesAnimationTypeX on ValuesAnimationType {
   /// Whether this style reveals content with a path mask.
   bool get usesPathReveal => switch (this) {
@@ -94,7 +94,7 @@ extension ValuesAnimationTypeX on ValuesAnimationType {
   /// Parses a persisted animation name from storage or configuration.
   ///
   /// Returns [fallback] when [value] is `null`, empty, or not a known
-  /// [ValuesAnimationType.name].
+  /// `ValuesAnimationType.name`.
   ///
   /// Example:
   /// ```dart

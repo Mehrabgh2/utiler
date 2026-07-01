@@ -59,7 +59,7 @@ class ApiService<E extends ApiError> {
 
   /// The underlying HTTP client used for all requests.
   ///
-  /// Inject a custom client for testing (for example [http.MockClient]) or
+  /// Inject a custom client for testing (for example `http.MockClient`) or
   /// to share connection settings across services.
   final http.Client client;
   final String? _baseUrl;

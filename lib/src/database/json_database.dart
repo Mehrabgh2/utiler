@@ -32,6 +32,9 @@ import 'package:utiler/src/logger/pretty_logger.dart';
 /// await db.close();
 /// ```
 class JsonDatabase {
+  /// Creates a [JsonDatabase]. Call [init] before use.
+  JsonDatabase();
+
   Box<String>? _db;
 
   /// Internal Hive box name used for storage.

@@ -54,7 +54,7 @@ extension LocaleExtension on BuildContext {
   ///
   /// Animation priority:
   /// 1. [animation] passed to this call
-  /// 2. [ValuesRuntime.localeAnimation] from [UtilerScope] or scope widgets
+  /// 2. `ValuesRuntime.localeAnimation` from [UtilerScope] or scope widgets
   /// 3. Instant change when both are `null`
   ///
   /// Example:

@@ -3,7 +3,7 @@ import 'package:utiler/utiler.dart';
 /// A minimal [ApiError] used when no custom [ApiErrorParser] is provided.
 ///
 /// Exposes only [ApiError.code] and [ApiError.message] with no extra fields.
-/// [ApiService] falls back to [SimpleApiErrorParser] when [errorParser] is
+/// [ApiService] falls back to [SimpleApiErrorParser] when `errorParser` is
 /// omitted at construction time.
 ///
 /// Example:
@@ -21,8 +21,8 @@ class SimpleApiError extends ApiError {
 
 /// Default error parser used when no custom [ApiErrorParser] is provided.
 ///
-/// Reads [message] and [code] from the error response body.
-/// If [message] is missing, falls back to `'Unknown error'`.
+/// Reads `message` and `code` from the error response body.
+/// If `message` is missing, falls back to `'Unknown error'`.
 ///
 /// Example:
 /// ```dart

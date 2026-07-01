@@ -81,7 +81,7 @@ abstract final class Utiler {
   /// The active [FeatureFlags] registry.
   ///
   /// Always safe to call — returns an empty registry (all flags `false`)
-  /// if no [featureFlags] map was provided to [UtilerScope].
+  /// if no `featureFlags` map was provided to [UtilerScope].
   ///
   /// ```dart
   /// if (Utiler.flags.isEnabled('beta_chat')) { ... }
@@ -100,7 +100,7 @@ abstract final class Utiler {
   /// The active [AppConfigStore].
   ///
   /// Throws [StateError] if accessed before [UtilerScope] is mounted or when
-  /// no [appConfig] was provided to [UtilerScope].
+  /// no `appConfig` was provided to [UtilerScope].
   ///
   /// ```dart
   /// final url   = Utiler.config.active.require<String>('api_base_url');

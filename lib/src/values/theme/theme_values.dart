@@ -25,6 +25,9 @@
 /// }
 /// ```
 abstract class ThemeValues {
+  /// Constructor for subclasses.
+  ThemeValues();
+
   /// Unique identifier for the theme (e.g. "light", "dark").
   abstract String id;
 }

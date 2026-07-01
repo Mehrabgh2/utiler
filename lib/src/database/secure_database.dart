@@ -30,6 +30,9 @@ import 'package:utiler/src/logger/pretty_logger.dart';
 /// await secureDb.clear();
 /// ```
 class SecureDatabase {
+  /// Creates a [SecureDatabase]. Call [init] before use.
+  SecureDatabase();
+
   /// Internal secure storage instance.
   final FlutterSecureStorage _db = FlutterSecureStorage(
     aOptions: _getAndroidOptions(),

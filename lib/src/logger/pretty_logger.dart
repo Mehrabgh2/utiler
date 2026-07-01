@@ -24,6 +24,9 @@ import 'package:utiler/src/logger/logger.dart';
 /// await PrettyLogger.api(response);
 /// ```
 class PrettyLogger {
+  /// Prevents instantiation. Use static methods such as [i], [e], and [api].
+  PrettyLogger._();
+
   /// Enables or disables pretty logging output globally.
   static bool enabled = true;
 
